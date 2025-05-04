@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -165,7 +164,7 @@
       document.getElementById("answer").textContent = "";
 
       try {
-        const response = await fetch("/ask", {
+        const response = await fetch("/api/ask", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question }),
