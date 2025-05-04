@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Question Interface</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --bg: #0f172a;
+      --text: #e2e8f0;
+      --card: #1e293b;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+      background: var(--card);
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(10px);
+    }
+
+    h2 {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(45deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+
+    #askForm {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 2rem;
+    }
+
+    input {
+      flex: 1;
+      padding: 1rem;
+      border: 2px solid rgba(99, 102, 241, 0.2);
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3);
+    }
+
+    button {
+      padding: 1rem 2rem;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
+    }
+
+    button:hover {
+      background: #4f46e5;
+      transform: translateY(-2px);
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      color: #94a3b8;
+      font-size: 0.9rem;
+      margin: 1rem 0;
+      position: relative;
+    }
+
+    .loading::after {
+      content: '';
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 2px solid #94a3b8;
+      border-radius: 50%;
+      border-top-color: transparent;
+      animation: spin 1s linear infinite;
+      margin-left: 10px;
+      vertical-align: middle;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .result {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1.5rem;
+      border-radius: 8px;
+      margin-top: 1.5rem;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      position: relative;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .result:empty {
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      #askForm {
+        flex-direction: column;
+      }
+      
+      button {
+        width: 100%;
+      }
+      
+      .container {
+        padding: 1.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>AI Knowledge Interface</h2>
+    <form id="askForm">
+      <input type="text" id="question" required placeholder="What would you like to know?">
+      <button type="submit">Ask AI</button>
+    </form>
+    <p id="loading" class="loading">Processing your question...</p>
+    <p id="answer" class="result"></p>
+  </div>
+
+  <script>
+    document.getElementById("askForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const question = document.getElementById("question").value;
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("answer").textContent = "";
+
+      try {
+        const response = await fetch("/ask", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question }),
+        });
+
+        const data = await response.json();
+        console.log('Response data:', data);
+        document.getElementById("loading").style.display = "none";
+        
+        if (data.success && data.answer) {
+          document.getElementById("answer").textContent = data.answer;
+        } else if (data.error) {
+          document.getElementById("answer").textContent = `Error: ${data.message || data.error}`;
+        } else {
+          document.getElementById("answer").textContent = "No answer found.";
+        }
+      } catch (error) {
+        console.error('Fetch error:', error);
+        document.getElementById("loading").style.display = "none";
+        document.getElementById("answer").textContent = "Error fetching data. Please try again later.";
+      }
+    });
+  </script>
+</body>
+</html>
