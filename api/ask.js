@@ -12,7 +12,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const webhookUrl = 'https://n8n-c4yc.onrender.com/webhook-test/search-question';
+    const webhookUrl = 'https://n8n-c4yc.onrender.com/webhook/search-question';
     const webhookData = {
       type: 'question_request',
       data: {
