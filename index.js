@@ -10,7 +10,7 @@ app.post('/ask', async (req, res) => {
   try {
     const question = req.body.question;
 
-    const response = await fetch('YOUR_N8N_WEBHOOK_URL', {
+    const response = await fetch('https://n8n-c4yc.onrender.com/webhook/search-question', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
