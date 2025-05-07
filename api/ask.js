@@ -1,4 +1,4 @@
-// File: pages/api/ask.js (or your equivalent API route file)
+// File: pages/api/ask.js
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -7,67 +7,88 @@ export default async function handler(req, res) {
 
   const { question } = req.body;
 
-  // Basic validation for the incoming question
   if (!question || typeof question !== 'string' || question.trim() === "") {
     return res.status(400).json({ success: false, message: 'Question is required and must be a non-empty string.' });
   }
 
   try {
-    // This is the URL of your n8n webhook that processes the question
-    // Make sure this is the correct URL for your n8n "Webhook - Search" node's production URL
-    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/search-question'; // <<<<< CHECK AND CONFIRM THIS URL
+    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/search-question'; // Ensure this is correct
 
-    // This is the fetch request TO your n8n webhook
     const n8nResponse = await fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      // The body structure here MUST match what your n8n webhook TRIGGER node expects.
-      // If your n8n Webhook node expects `{"question": "your question"}`, use this:
       body: JSON.stringify({ question: question.trim() }),
-      // If your n8n Webhook node expects `{"data": {"question": "your question"}}`, use this:
-      // body: JSON.stringify({ data: { question: question.trim() } }), 
     });
 
-    // Check if the call to n8n itself was successful
     if (!n8nResponse.ok) {
-      const errorBody = await n8nResponse.text(); // Get more details from n8n error
+      const errorBody = await n8nResponse.text();
       console.error(`Error from n8n webhook (${n8nWebhookUrl}). Status: ${n8nResponse.status}. Body: ${errorBody}`);
-      return res.status(502).json({ success: false, message: 'Error communicating with the backend AI service. Please check server logs.' });
+      return res.status(502).json({ success: false, message: 'Error communicating with the backend AI service.' });
     }
 
-    // Parse the JSON response FROM n8n
     const dataFromN8N = await n8nResponse.json();
 
-    // ---- IMPORTANT: Log what's actually received from n8n ----
-    console.log("Next.js API (/api/ask) - Data received from n8n:", JSON.stringify(dataFromN8N, null, 2));
+    // ---- CRITICAL LOG: CHECK THIS IN YOUR SERVER LOGS ----
+    console.log("Next.js API (/api/ask) - RAW Data received from n8n:", JSON.stringify(dataFromN8N, null, 2));
 
     let extractedAnswer = null;
     let extractedImage = null;
+    let dataFound = false;
 
-    // n8n Code node outputs an array, typically with one item: [{ json: { Answer: "...", Image: "..." } }]
-    // So, we access dataFromN8N[0].json
+    // Scenario 1: n8n returns the expected array like [ { json: { Answer: "...", Image: "..." } } ]
     if (Array.isArray(dataFromN8N) && dataFromN8N.length > 0 && dataFromN8N[0] && typeof dataFromN8N[0].json === 'object' && dataFromN8N[0].json !== null) {
-      const resultItemJson = dataFromN8N[0].json; // This is where Answer and Image are nested
+      console.log("Next.js API (/api/ask) - Processing n8n data as: Array of objects with 'json' key");
+      const resultItemJson = dataFromN8N[0].json;
+      extractedAnswer = resultItemJson.Answer ? String(resultItemJson.Answer).trim() : null;
+      extractedImage = resultItemJson.Image || null;
+      dataFound = true;
+    } 
+    // Scenario 2: n8n might return the inner { Answer: "...", Image: "..." } directly if "Respond to Webhook" is set to "First Entry JSON"
+    // AND the Code node returned { json: { Answer: ..., Image: ... } } (which is a single object in the 'json' property)
+    else if (typeof dataFromN8N === 'object' && dataFromN8N !== null && typeof dataFromN8N.Answer !== 'undefined') {
+        // This case would match if n8n's Code node outputted [{ json: {Answer: "...", Image: "..."} }]
+        // AND a "Respond to Webhook" node after it was set to output "Last Entry JSON" (from the json key) or similar, 
+        // or if the n8n webhook itself simplified a single item response.
+        // This also covers if n8n's LAST node output was just { Answer: "...", Image: "..." }
+        console.log("Next.js API (/api/ask) - Processing n8n data as: Direct object with Answer/Image keys");
+        extractedAnswer = dataFromN8N.Answer ? String(dataFromN8N.Answer).trim() : null;
+        extractedImage = dataFromN8N.Image || null;
+        dataFound = true;
+    }
+    // Scenario 3: n8n might return an array of items directly like [ { Answer: "...", Image: "..." } ]
+    else if (Array.isArray(dataFromN8N) && dataFromN8N.length > 0 && typeof dataFromN8N[0] === 'object' && dataFromN8N[0] !== null && typeof dataFromN8N[0].Answer !== 'undefined') {
+      console.log("Next.js API (/api/ask) - Processing n8n data as: Array of direct Answer/Image objects");
+      const firstItem = dataFromN8N[0];
+      extractedAnswer = firstItem.Answer ? String(firstItem.Answer).trim() : null;
+      extractedImage = firstItem.Image || null;
+      dataFound = true;
+    }
 
-      extractedAnswer = resultItemJson.Answer ? String(resultItemJson.Answer).trim() : "No answer text found in n8n response.";
-      extractedImage = resultItemJson.Image || null; // This should be the direct Google Drive URL from n8n
-    } else {
-      console.warn("Next.js API (/api/ask) - Unexpected data format or empty array from n8n:", dataFromN8N);
+
+    if (!dataFound) {
+      console.warn("Next.js API (/api/ask) - Unexpected data format from n8n. RAW data logged above. Defaulting to error message.");
       extractedAnswer = "Could not retrieve an answer due to an unexpected data format from the AI service.";
-      // You might want to set success to false here if the format is critical
+      // extractedImage remains null
+    } else if (!extractedAnswer) {
+      // Data format might have been recognized, but no actual answer text was found
+      extractedAnswer = "Answer found, but content is empty.";
     }
     
-    // ---- IMPORTANT: Log what this API route is about to send to the frontend ----
     console.log("Next.js API (/api/ask) - Sending to frontend: Answer:", extractedAnswer, "| Image:", extractedImage);
 
     return res.status(200).json({
-      success: true, // Assuming success if we got this far, adjust if needed based on n8n response
+      success: dataFound && extractedAnswer !== "Could not retrieve an answer due to an unexpected data format from the AI service.", // Be more precise about success
       answer: extractedAnswer,
       image: extractedImage,
     });
 
   } catch (error) {
     console.error("Next.js API (/api/ask) - Critical error in handler:", error);
+    // Check if the error is due to n8nResponse.json() failing (e.g., n8n sent non-JSON)
+    if (error instanceof SyntaxError && error.message.includes("JSON")) {
+        console.error("Next.js API (/api/ask) - Error parsing JSON from n8n. n8n might have sent HTML or plain text (e.g. an error page).");
+        return res.status(502).json({ success: false, message: 'Received invalid data from the backend AI service.' });
+    }
     return res.status(500).json({ success: false, message: 'Internal server error processing your request.' });
   }
 }
