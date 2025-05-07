@@ -2,33 +2,90 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AI Q&A</title>
+  <title>Ask AI</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      margin: 0;
       padding: 2rem;
-      background: #f9f9f9;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to right, #141e30, #243b55);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
-    input, button {
-      padding: 0.5rem;
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    form {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+      width: 100%;
+      max-width: 500px;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 2rem;
+      border-radius: 16px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border: none;
+      border-radius: 8px;
       font-size: 1rem;
     }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      color: #fff;
+      background: #00bcd4;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    button:hover {
+      background: #0097a7;
+    }
+
     .result {
       margin-top: 2rem;
+      text-align: center;
+      max-width: 600px;
+    }
+
+    #answer {
       font-size: 1.2rem;
+      margin-bottom: 1rem;
+    }
+
+    #image {
+      max-width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+      display: none;
     }
   </style>
 </head>
 <body>
-  <h1>Ask a Question</h1>
+  <h1>Ask the AI</h1>
+
   <form id="askForm">
-    <input type="text" id="question" placeholder="Type your question" required />
+    <input type="text" id="question" placeholder="Enter your question..." required />
     <button type="submit">Get Answer</button>
   </form>
 
   <div id="responseContainer" class="result" style="display: none;">
     <p id="answer"></p>
-    <img id="image" style="max-width: 100%; margin-top: 1rem; border-radius: 12px; display: none;" />
+    <img id="image" />
   </div>
 
   <script>
