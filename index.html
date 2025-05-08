@@ -194,7 +194,7 @@
           if (data.image) {
             let imageURL = data.image;
 
-            // Check if the image URL is from Google Drive
+            // Ensure we handle Google Drive URLs properly
             if (imageURL.includes("drive.google.com")) {
               const imageId = imageURL.split('id=')[1].split('&')[0];
               imageURL = `https://drive.google.com/uc?id=${imageId}`; // Transform to embeddable image URL
