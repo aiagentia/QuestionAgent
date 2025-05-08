@@ -158,7 +158,10 @@
     <p id="loading" class="loading">Processing your question...</p>
     <div class="result" id="answerContainer" style="display: none;">
       <p id="answer"></p>
-      <img id="image" onerror="this.onerror=null; console.error('Image failed to load:', this.src); this.style.display='none';" />
+      <div id="imageContainer" style="display: none; margin-top: 1rem;">
+        <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);" />
+        <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
+      </div>
     </div>
   </div>
 
@@ -170,12 +173,15 @@
       const loadingEl = document.getElementById("loading");
       const answerContainer = document.getElementById("answerContainer");
       const answerEl = document.getElementById("answer");
+      const imageContainer = document.getElementById("imageContainer");
       const imageEl = document.getElementById("image");
+      const imageError = document.getElementById("imageError");
 
       loadingEl.style.display = "block";
       answerContainer.style.display = "none";
       answerEl.textContent = "";
-      imageEl.style.display = "none";
+      imageContainer.style.display = "none";
+      imageError.style.display = "none";
 
       try {
         const response = await fetch("/api/ask", {
@@ -194,11 +200,32 @@
 
           if (data.image) {
             console.log('Setting image URL:', data.image);
-            imageEl.src = data.image;
-            imageEl.style.display = "block";
+            
+            // Ensure the image URL is properly formatted
+            let imageUrl = data.image.trim();
+            if (imageUrl.includes('drive.google.com')) {
+              // If it's a Google Drive URL, ensure it's in the correct format
+              if (!imageUrl.includes('export=view')) {
+                const fileId = imageUrl.match(/[-\w]{25,}/);
+                if (fileId) {
+                  imageUrl = `https://drive.google.com/uc?export=view&id=${fileId[0]}`;
+                }
+              }
+            }
+            
+            imageEl.src = imageUrl;
+            imageContainer.style.display = "block";
             
             imageEl.onload = function() {
               console.log('Image loaded successfully');
+              imageError.style.display = "none";
+            };
+            
+            imageEl.onerror = function() {
+              console.error('Image failed to load:', imageUrl);
+              imageError.style.display = "block";
+              // Try to open the image in a new tab to check if it's accessible
+              window.open(imageUrl, '_blank');
             };
           }
         } else {
