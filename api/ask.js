@@ -1,3 +1,5 @@
+// File: pages/api/ask.js
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
@@ -51,6 +53,15 @@ export default async function handler(req, res) {
       extractedAnswer = firstItem.Answer?.trim() || null;
       extractedImage = firstItem.Image?.trim() || null;
       dataFound = true;
+    }
+
+    // Transform the Google Drive URL into a valid image URL
+    if (extractedImage && extractedImage.includes('drive.google.com')) {
+      const regex = /id=([a-zA-Z0-9_-]+)/;
+      const match = extractedImage.match(regex);
+      if (match && match[1]) {
+        extractedImage = `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      }
     }
 
     if (!dataFound) {
