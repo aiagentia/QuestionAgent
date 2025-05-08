@@ -1,84 +1,54 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Question Interface</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Q&A</title>
   <style>
-    /* Styles remain the same */
+    #answer-container {
+      margin-top: 20px;
+    }
+    #answer-container img {
+      max-width: 100%;
+      height: auto;
+      display: block;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h2>AI Knowledge Interface</h2>
-    <form id="askForm">
-      <input type="text" id="question" required placeholder="What would you like to know?" />
-      <button type="submit">Ask AI</button>
-    </form>
-    <p id="loading" class="loading">Processing your question...</p>
-    <div class="result" id="answerContainer" style="display: none;">
-      <p id="answer"></p>
-      <img id="image" />
-    </div>
-  </div>
+  <h1>Ask Your Question</h1>
+  <form id="ask-form">
+    <input type="text" id="question" placeholder="Ask a question..." required>
+    <button type="submit">Submit</button>
+  </form>
+
+  <div id="answer-container"></div>
 
   <script>
-    document.getElementById("askForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
+    document.getElementById('ask-form').addEventListener('submit', async function(event) {
+      event.preventDefault();
+      const question = document.getElementById('question').value;
 
-      const question = document.getElementById("question").value;
-      const loadingEl = document.getElementById("loading");
-      const answerContainer = document.getElementById("answerContainer");
-      const answerEl = document.getElementById("answer");
-      const imageEl = document.getElementById("image");
+      const response = await fetch('/api/ask', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question }),
+      });
 
-      loadingEl.style.display = "block";
-      answerContainer.style.display = "none";
-      answerEl.textContent = "";
-      imageEl.style.display = "none";
+      const result = await response.json();
+      const answerContainer = document.getElementById('answer-container');
 
-      try {
-        const response = await fetch("/api/ask", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ question }),
-        });
+      if (result.success) {
+        let answerHtml = `<p>${result.answer}</p>`;
 
-        const data = await response.json();
-        
-        // Log the received data to understand the issue
-        console.log('Received Data:', data);
-        
-        loadingEl.style.display = "none";
-
-        if (data.success && data.answer) {
-          answerEl.textContent = data.answer;
-          answerContainer.style.display = "block";
-
-          if (data.image) {
-            let imageURL = data.image;
-
-            // Clean up the image URL if it's from Google Drive
-            if (imageURL.includes("drive.google.com")) {
-              const imageId = imageURL.split('id=')[1].split('&')[0];
-              imageURL = `https://drive.google.com/uc?id=${imageId}`; // Embeddable image link
-            }
-
-            console.log('Cleaned Image URL:', imageURL);  // Log cleaned image URL
-
-            imageEl.src = imageURL;
-            imageEl.style.display = "block";
-          }
-        } else {
-          answerEl.textContent = data.error || "No answer found.";
-          answerContainer.style.display = "block";
+        if (result.image) {
+          answerHtml += `<img src="${result.image}" alt="Answer Image">`;
         }
-      } catch (error) {
-        console.error('Fetch error:', error);
-        loadingEl.style.display = "none";
-        answerEl.textContent = "Error fetching data. Please try again later.";
-        answerContainer.style.display = "block";
+
+        answerContainer.innerHTML = answerHtml;
+      } else {
+        answerContainer.innerHTML = `<p>${result.message}</p>`;
       }
     });
   </script>
