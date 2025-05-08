@@ -55,12 +55,16 @@ export default async function handler(req, res) {
       dataFound = true;
     }
 
-    // Transform the Google Drive URL into a valid image URL
+    // Check if the image URL is from Google Drive
     if (extractedImage && extractedImage.includes('drive.google.com')) {
+      console.log("Next.js API (/api/ask) - Google Drive URL detected, attempting transformation.");
       const regex = /id=([a-zA-Z0-9_-]+)/;
       const match = extractedImage.match(regex);
       if (match && match[1]) {
+        // Convert to a valid Google Drive image URL
         extractedImage = `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      } else {
+        console.warn("Next.js API (/api/ask) - Google Drive ID extraction failed.");
       }
     }
 
