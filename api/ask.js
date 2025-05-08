@@ -28,67 +28,56 @@ export default async function handler(req, res) {
 
     const dataFromN8N = await n8nResponse.json();
 
-    // ---- CRITICAL LOG: CHECK THIS IN YOUR SERVER LOGS ----
     console.log("Next.js API (/api/ask) - RAW Data received from n8n:", JSON.stringify(dataFromN8N, null, 2));
 
     let extractedAnswer = null;
     let extractedImage = null;
     let dataFound = false;
 
-    // Scenario 1: n8n returns the expected array like [ { json: { Answer: "...", Image: "..." } } ]
     if (Array.isArray(dataFromN8N) && dataFromN8N.length > 0 && dataFromN8N[0] && typeof dataFromN8N[0].json === 'object' && dataFromN8N[0].json !== null) {
       console.log("Next.js API (/api/ask) - Processing n8n data as: Array of objects with 'json' key");
       const resultItemJson = dataFromN8N[0].json;
-      extractedAnswer = resultItemJson.Answer ? String(resultItemJson.Answer).trim() : null;
-      extractedImage = resultItemJson.Image || null;
+      extractedAnswer = resultItemJson.Answer?.trim() || null;
+      extractedImage = resultItemJson.Image?.trim() || null;
       dataFound = true;
     } 
-    // Scenario 2: n8n might return the inner { Answer: "...", Image: "..." } directly if "Respond to Webhook" is set to "First Entry JSON"
-    // AND the Code node returned { json: { Answer: ..., Image: ... } } (which is a single object in the 'json' property)
     else if (typeof dataFromN8N === 'object' && dataFromN8N !== null && typeof dataFromN8N.Answer !== 'undefined') {
-        // This case would match if n8n's Code node outputted [{ json: {Answer: "...", Image: "..."} }]
-        // AND a "Respond to Webhook" node after it was set to output "Last Entry JSON" (from the json key) or similar, 
-        // or if the n8n webhook itself simplified a single item response.
-        // This also covers if n8n's LAST node output was just { Answer: "...", Image: "..." }
-        console.log("Next.js API (/api/ask) - Processing n8n data as: Direct object with Answer/Image keys");
-        extractedAnswer = dataFromN8N.Answer ? String(dataFromN8N.Answer).trim() : null;
-        extractedImage = dataFromN8N.Image || null;
-        dataFound = true;
+      console.log("Next.js API (/api/ask) - Processing n8n data as: Direct object with Answer/Image keys");
+      extractedAnswer = dataFromN8N.Answer?.trim() || null;
+      extractedImage = dataFromN8N.Image?.trim() || null;
+      dataFound = true;
     }
-    // Scenario 3: n8n might return an array of items directly like [ { Answer: "...", Image: "..." } ]
     else if (Array.isArray(dataFromN8N) && dataFromN8N.length > 0 && typeof dataFromN8N[0] === 'object' && dataFromN8N[0] !== null && typeof dataFromN8N[0].Answer !== 'undefined') {
       console.log("Next.js API (/api/ask) - Processing n8n data as: Array of direct Answer/Image objects");
       const firstItem = dataFromN8N[0];
-      extractedAnswer = firstItem.Answer ? String(firstItem.Answer).trim() : null;
-      extractedImage = firstItem.Image || null;
+      extractedAnswer = firstItem.Answer?.trim() || null;
+      extractedImage = firstItem.Image?.trim() || null;
       dataFound = true;
     }
-
 
     if (!dataFound) {
       console.warn("Next.js API (/api/ask) - Unexpected data format from n8n. RAW data logged above. Defaulting to error message.");
       extractedAnswer = "Could not retrieve an answer due to an unexpected data format from the AI service.";
-      // extractedImage remains null
     } else if (!extractedAnswer) {
-      // Data format might have been recognized, but no actual answer text was found
       extractedAnswer = "Answer found, but content is empty.";
     }
-    
+
     console.log("Next.js API (/api/ask) - Sending to frontend: Answer:", extractedAnswer, "| Image:", extractedImage);
 
     return res.status(200).json({
-      success: dataFound && extractedAnswer !== "Could not retrieve an answer due to an unexpected data format from the AI service.", // Be more precise about success
+      success: dataFound && extractedAnswer !== "Could not retrieve an answer due to an unexpected data format from the AI service.",
       answer: extractedAnswer,
       image: extractedImage,
     });
 
   } catch (error) {
     console.error("Next.js API (/api/ask) - Critical error in handler:", error);
-    // Check if the error is due to n8nResponse.json() failing (e.g., n8n sent non-JSON)
+
     if (error instanceof SyntaxError && error.message.includes("JSON")) {
-        console.error("Next.js API (/api/ask) - Error parsing JSON from n8n. n8n might have sent HTML or plain text (e.g. an error page).");
-        return res.status(502).json({ success: false, message: 'Received invalid data from the backend AI service.' });
+      console.error("Next.js API (/api/ask) - Error parsing JSON from n8n. n8n might have sent HTML or plain text (e.g. an error page).");
+      return res.status(502).json({ success: false, message: 'Received invalid data from the backend AI service.' });
     }
+
     return res.status(500).json({ success: false, message: 'Internal server error processing your request.' });
   }
 }
