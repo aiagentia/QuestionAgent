@@ -1,51 +1,61 @@
-document.getElementById("askForm").addEventListener("submit", async function (e) {
-  e.preventDefault();
+// File: pages/api/ask.js
 
-  const question = document.getElementById("question").value;
-  const loadingEl = document.getElementById("loading");
-  const answerContainer = document.getElementById("answerContainer");
-  const answerEl = document.getElementById("answer");
+export default async function handler(req, res) {
+  if (req.method !== 'POST') {
+    return res.status(405).json({ success: false, message: 'Method not allowed' });
+  }
 
-  loadingEl.style.display = "block";
-  answerContainer.style.display = "none";
-  answerEl.textContent = "";
-  imageEl.style.display = "none";
+  const { question } = req.body;
+
+  if (!question || typeof question !== 'string' || question.trim() === "") {
+    return res.status(400).json({ success: false, message: 'Question is required and must be a non-empty string.' });
+  }
 
   try {
-    const response = await fetch("/api/ask", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question }),
+    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/search-question'; // Ensure this is correct
+
+    const n8nResponse = await fetch(n8nWebhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ question: question.trim() }),
     });
 
-    const data = await response.json();
-    loadingEl.style.display = "none";
-
-    if (data.success && data.answer) {
-      answerEl.textContent = data.answer;
-      answerContainer.style.display = "block";
-
-      if (data.image) {
-        let imageURL = data.image;
-
-        // Check if the image URL is from Google Drive
-        if (imageURL.includes("drive.google.com")) {
-          const imageId = imageURL.split('id=')[1].split('&')[0];
-          imageURL = `https://drive.google.com/uc?id=${imageId}`; // Transform to embeddable image URL
-        }
-
-        // Display the image beside the answer
-        const imageHtml = `<img src="${imageURL}" alt="Answer Image" style="max-width: 200px; margin-left: 20px; border-radius: 8px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);">`;
-        answerContainer.innerHTML = `<div style="display: flex; align-items: center;">${answerEl.textContent}${imageHtml}</div>`;
-      }
-    } else {
-      answerEl.textContent = data.error || "No answer found.";
-      answerContainer.style.display = "block";
+    if (!n8nResponse.ok) {
+      const errorBody = await n8nResponse.text();
+      console.error(`Error from n8n webhook (${n8nWebhookUrl}). Status: ${n8nResponse.status}. Body: ${errorBody}`);
+      return res.status(502).json({ success: false, message: 'Error communicating with the backend AI service.' });
     }
+
+    const dataFromN8N = await n8nResponse.json();
+
+    let extractedAnswer = null;
+    let extractedImage = null;
+    let dataFound = false;
+
+    // Process the data from n8n response
+    if (Array.isArray(dataFromN8N) && dataFromN8N.length > 0 && dataFromN8N[0].json) {
+      const resultItemJson = dataFromN8N[0].json;
+      extractedAnswer = resultItemJson.Answer?.trim() || null;
+      extractedImage = resultItemJson.Image?.trim() || null;
+      dataFound = true;
+    } else {
+      extractedAnswer = "Could not retrieve an answer.";
+    }
+
+    if (extractedImage && extractedImage.includes("drive.google.com")) {
+      // Convert the Google Drive URL to an embeddable URL
+      const imageId = extractedImage.split('id=')[1].split('&')[0];
+      extractedImage = `https://drive.google.com/uc?id=${imageId}`;
+    }
+
+    return res.status(200).json({
+      success: dataFound,
+      answer: extractedAnswer,
+      image: extractedImage,
+    });
+
   } catch (error) {
-    console.error('Fetch error:', error);
-    loadingEl.style.display = "none";
-    answerEl.textContent = "Error fetching data. Please try again later.";
-    answerContainer.style.display = "block";
+    console.error("Error in /api/ask:", error);
+    return res.status(500).json({ success: false, message: 'Internal server error processing your request.' });
   }
-});
+}
