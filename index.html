@@ -192,15 +192,16 @@
           answerContainer.style.display = "block";
 
           if (data.image) {
-            imageEl.src = data.image;
+            let imageURL = data.image;
+
+            // Check if the image URL is from Google Drive
+            if (imageURL.includes("drive.google.com")) {
+              const imageId = imageURL.split('id=')[1].split('&')[0];
+              imageURL = `https://drive.google.com/uc?id=${imageId}`; // Transform to embeddable image URL
+            }
+
+            imageEl.src = imageURL;
             imageEl.style.display = "block";
-            imageEl.onload = function() {
-              console.log('Image loaded successfully!');
-            };
-            imageEl.onerror = function() {
-              console.error('Error loading image.');
-              imageEl.style.display = 'none'; // Hide image if it doesn't load
-            };
           }
         } else {
           answerEl.textContent = data.error || "No answer found.";
