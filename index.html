@@ -194,6 +194,13 @@
           if (data.image) {
             imageEl.src = data.image;
             imageEl.style.display = "block";
+            imageEl.onload = function() {
+              console.log('Image loaded successfully!');
+            };
+            imageEl.onerror = function() {
+              console.error('Error loading image.');
+              imageEl.style.display = 'none'; // Hide image if it doesn't load
+            };
           }
         } else {
           answerEl.textContent = data.error || "No answer found.";
