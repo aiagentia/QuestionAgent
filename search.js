@@ -1,4 +1,10 @@
 export default async function handler(req, res) {
+  console.log('Search API - Received request:', {
+    method: req.method,
+    body: req.body,
+    headers: req.headers
+  });
+
   if (req.method !== 'POST') {
     return res.status(405).json({ success: false, message: 'Method not allowed' });
   }
@@ -10,13 +16,18 @@ export default async function handler(req, res) {
   }
 
   try {
-    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/keyword-search'; // Update this with your actual n8n webhook URL
+    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/keyword-search';
+    console.log('Search API - Sending request to n8n webhook:', n8nWebhookUrl);
+    console.log('Search API - Request payload:', { keyword: keyword.trim() });
 
     const n8nResponse = await fetch(n8nWebhookUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ keyword: keyword.trim() }),
     });
+
+    console.log('Search API - n8n response status:', n8nResponse.status);
+    console.log('Search API - n8n response headers:', Object.fromEntries(n8nResponse.headers.entries()));
 
     if (!n8nResponse.ok) {
       const errorBody = await n8nResponse.text();
@@ -38,10 +49,12 @@ export default async function handler(req, res) {
       }).filter(Boolean);
     }
 
+    console.log('Search API - Processed results:', results);
     return res.status(200).json(results);
 
   } catch (error) {
     console.error("Search API - Critical error in handler:", error);
+    console.error("Search API - Error stack:", error.stack);
 
     if (error instanceof SyntaxError && error.message.includes("JSON")) {
       console.error("Search API - Error parsing JSON from n8n. n8n might have sent HTML or plain text (e.g. an error page).");
