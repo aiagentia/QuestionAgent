@@ -161,6 +161,7 @@
       <div id="imageContainer" style="display: none; margin-top: 1rem;">
         <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);" />
         <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
+        <p id="imageUrl" style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
       </div>
     </div>
   </div>
@@ -176,12 +177,14 @@
       const imageContainer = document.getElementById("imageContainer");
       const imageEl = document.getElementById("image");
       const imageError = document.getElementById("imageError");
+      const imageUrlEl = document.getElementById("imageUrl");
 
       loadingEl.style.display = "block";
       answerContainer.style.display = "none";
       answerEl.textContent = "";
       imageContainer.style.display = "none";
       imageError.style.display = "none";
+      imageUrlEl.textContent = "";
 
       try {
         const response = await fetch("/api/ask", {
@@ -199,19 +202,23 @@
           answerContainer.style.display = "block";
 
           if (data.image) {
-            console.log('Setting image URL:', data.image);
+            console.log('Original image URL:', data.image);
             
             // Ensure the image URL is properly formatted
             let imageUrl = data.image.trim();
             if (imageUrl.includes('drive.google.com')) {
-              // If it's a Google Drive URL, ensure it's in the correct format
-              if (!imageUrl.includes('export=view')) {
-                const fileId = imageUrl.match(/[-\w]{25,}/);
-                if (fileId) {
-                  imageUrl = `https://drive.google.com/uc?export=view&id=${fileId[0]}`;
-                }
+              // Extract the file ID
+              const fileId = imageUrl.match(/[-\w]{25,}/);
+              if (fileId) {
+                // Try different Google Drive URL formats
+                const fileIdStr = fileId[0];
+                imageUrl = `https://drive.google.com/file/d/${fileIdStr}/preview`;
+                console.log('Converted to preview URL:', imageUrl);
               }
             }
+            
+            // Display the URL for debugging
+            imageUrlEl.textContent = `Image URL: ${imageUrl}`;
             
             imageEl.src = imageUrl;
             imageContainer.style.display = "block";
@@ -224,8 +231,16 @@
             imageEl.onerror = function() {
               console.error('Image failed to load:', imageUrl);
               imageError.style.display = "block";
-              // Try to open the image in a new tab to check if it's accessible
-              window.open(imageUrl, '_blank');
+              
+              // Try alternative URL format
+              if (imageUrl.includes('drive.google.com')) {
+                const fileId = imageUrl.match(/[-\w]{25,}/);
+                if (fileId) {
+                  const alternativeUrl = `https://drive.google.com/uc?export=view&id=${fileId[0]}`;
+                  console.log('Trying alternative URL:', alternativeUrl);
+                  imageEl.src = alternativeUrl;
+                }
+              }
             };
           }
         } else {
