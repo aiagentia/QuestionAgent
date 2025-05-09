@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>AI Question Interface</title>
+  <title>AI Knowledge Interface</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"/>
   <style>
     :root {
       --primary: #6366f1;
@@ -49,7 +50,26 @@
       text-align: center;
     }
 
-    #askForm {
+    .section {
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .section:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .section-title {
+      font-size: 1.2rem;
+      color: var(--text);
+      margin-bottom: 1rem;
+      opacity: 0.8;
+    }
+
+    #askForm, #searchForm {
       display: flex;
       gap: 10px;
       margin-bottom: 2rem;
@@ -86,6 +106,14 @@
     button:hover {
       background: #4f46e5;
       transform: translateY(-2px);
+    }
+
+    .search-button {
+      padding: 1rem;
+      width: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
 
     .loading {
@@ -133,8 +161,25 @@
       display: none;
     }
 
+    #searchResults {
+      display: none;
+      margin-top: 1rem;
+    }
+
+    .search-result-item {
+      background: rgba(255, 255, 255, 0.05);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .search-result-item:last-child {
+      margin-bottom: 0;
+    }
+
     @media (max-width: 640px) {
-      #askForm {
+      #askForm, #searchForm {
         flex-direction: column;
       }
 
@@ -151,23 +196,40 @@
 <body>
   <div class="container">
     <h2>AI Knowledge Interface</h2>
-    <form id="askForm">
-      <input type="text" id="question" required placeholder="What would you like to know?" />
-      <button type="submit">Ask AI</button>
-    </form>
-    <p id="loading" class="loading">Processing your question...</p>
-    <div class="result" id="answerContainer" style="display: none;">
-      <p id="answer"></p>
-      <div id="imageContainer" style="display: none; margin-top: 1rem;">
-        <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);" />
-        <iframe id="imageFrame" style="display: none; width: 100%; height: 400px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);"></iframe>
-        <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
-        <p id="imageUrl" style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
+    
+    <div class="section">
+      <div class="section-title">Ask a Question</div>
+      <form id="askForm">
+        <input type="text" id="question" required placeholder="What would you like to know?" />
+        <button type="submit">Ask AI</button>
+      </form>
+      <p id="loading" class="loading">Processing your question...</p>
+      <div class="result" id="answerContainer" style="display: none;">
+        <p id="answer"></p>
+        <div id="imageContainer" style="display: none; margin-top: 1rem;">
+          <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);" />
+          <iframe id="imageFrame" style="display: none; width: 100%; height: 400px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);"></iframe>
+          <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
+          <p id="imageUrl" style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
+        </div>
       </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Search Knowledge Base</div>
+      <form id="searchForm">
+        <input type="text" id="searchKeyword" required placeholder="Enter a keyword to search..." />
+        <button type="submit" class="search-button">
+          <i class="fas fa-search"></i>
+        </button>
+      </form>
+      <p id="searchLoading" class="loading">Searching...</p>
+      <div id="searchResults"></div>
     </div>
   </div>
 
   <script>
+    // Existing ask form handler
     document.getElementById("askForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -208,23 +270,18 @@
           if (data.image) {
             console.log('Original image URL:', data.image);
             
-            // Ensure the image URL is properly formatted
             let imageUrl = data.image.trim();
             if (imageUrl.includes('drive.google.com')) {
-              // Extract the file ID
               const fileId = imageUrl.match(/[-\w]{25,}/);
               if (fileId) {
                 const fileIdStr = fileId[0];
-                // Try direct download URL first
                 imageUrl = `https://drive.google.com/uc?export=download&id=${fileIdStr}`;
                 console.log('Using direct download URL:', imageUrl);
               }
             }
             
-            // Display the URL for debugging
             imageUrlEl.textContent = `Image URL: ${imageUrl}`;
             
-            // Try loading with img tag first
             imageEl.src = imageUrl;
             imageContainer.style.display = "block";
             
@@ -236,7 +293,6 @@
             
             imageEl.onerror = function() {
               console.error('Image failed to load, trying iframe:', imageUrl);
-              // If img fails, try iframe
               const fileId = imageUrl.match(/[-\w]{25,}/);
               if (fileId) {
                 const iframeUrl = `https://drive.google.com/file/d/${fileId[0]}/preview`;
@@ -258,6 +314,49 @@
         loadingEl.style.display = "none";
         answerEl.textContent = "Error fetching data. Please try again later.";
         answerContainer.style.display = "block";
+      }
+    });
+
+    // New search form handler
+    document.getElementById("searchForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const keyword = document.getElementById("searchKeyword").value;
+      const loadingEl = document.getElementById("searchLoading");
+      const resultsContainer = document.getElementById("searchResults");
+
+      loadingEl.style.display = "block";
+      resultsContainer.style.display = "none";
+      resultsContainer.innerHTML = "";
+
+      try {
+        const response = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keyword }),
+        });
+
+        const data = await response.json();
+        console.log('Search results:', data);
+        loadingEl.style.display = "none";
+
+        if (data && data.length > 0) {
+          resultsContainer.style.display = "block";
+          data.forEach(result => {
+            const resultElement = document.createElement("div");
+            resultElement.className = "search-result-item";
+            resultElement.textContent = result.answer;
+            resultsContainer.appendChild(resultElement);
+          });
+        } else {
+          resultsContainer.style.display = "block";
+          resultsContainer.innerHTML = '<div class="search-result-item">No results found.</div>';
+        }
+      } catch (error) {
+        console.error('Search error:', error);
+        loadingEl.style.display = "none";
+        resultsContainer.style.display = "block";
+        resultsContainer.innerHTML = '<div class="search-result-item">Error searching. Please try again later.</div>';
       }
     });
   </script>
