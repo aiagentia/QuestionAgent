@@ -349,7 +349,11 @@
           data.forEach(result => {
             const resultElement = document.createElement("div");
             resultElement.className = "search-result-item";
-            resultElement.textContent = result.answer;
+            resultElement.innerHTML = `
+              <strong>Q:</strong> ${result.question || ''}<br>
+              <strong>A:</strong> ${result.answer || ''}
+              ${result.image ? `<br><img src="${result.image.replace('open?id=', 'uc?export=view&id=')}" style="max-width:200px; margin-top:8px; border-radius:8px;">` : ''}
+            `;
             resultsContainer.appendChild(resultElement);
           });
         } else {
