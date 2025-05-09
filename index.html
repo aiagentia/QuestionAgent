@@ -1,252 +1,161 @@
-<script>
-  // Existing ask form handler
-  document.getElementById("askForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
+    // New search form handler (with more robust image display logic)
+    document.getElementById("searchForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-    const question = document.getElementById("question").value;
-    const loadingEl = document.getElementById("loading");
-    const answerContainer = document.getElementById("answerContainer");
-    const answerEl = document.getElementById("answer");
-    const imageContainer = document.getElementById("imageContainer");
-    const imageEl = document.getElementById("image");
-    const imageFrame = document.getElementById("imageFrame");
-    const imageError = document.getElementById("imageError");
-    const imageUrlEl = document.getElementById("imageUrl");
+      const keyword = document.getElementById("searchKeyword").value;
+      const loadingEl = document.getElementById("searchLoading");
+      const resultsContainer = document.getElementById("searchResults");
 
-    loadingEl.style.display = "block";
-    answerContainer.style.display = "none";
-    answerEl.textContent = "";
-    imageContainer.style.display = "none";
-    imageError.style.display = "none";
-    imageUrlEl.textContent = "";
-    imageEl.src = ""; // Clear previous image
-    imageFrame.src = ""; // Clear previous iframe
-    imageEl.style.display = "block"; // Default to showing img tag
-    imageFrame.style.display = "none"; // Default to hiding iframe
+      console.log('Search form submitted with keyword:', keyword);
 
-    try {
-      const response = await fetch("/api/ask", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question }),
-      });
+      loadingEl.style.display = "block";
+      resultsContainer.style.display = "none";
+      resultsContainer.innerHTML = ""; // Clear previous results
 
-      const data = await response.json();
-      console.log('Received data from /api/ask:', data);
-      loadingEl.style.display = "none";
+      try {
+        console.log('Sending request to /api/search');
+        const response = await fetch("/api/search", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ keyword }),
+        });
 
-      if (data.success && data.answer) {
-        answerEl.textContent = data.answer;
-        answerContainer.style.display = "block";
-
-        if (data.image) {
-          console.log('Ask Original image URL:', data.image);
-          
-          let originalImageUrlForAsk = String(data.image).trim();
-          let attemptImageUrlForAsk = originalImageUrlForAsk;
-
-          if (originalImageUrlForAsk.includes('drive.google.com')) {
-            const fileIdMatch = originalImageUrlForAsk.match(/[-\w]{25,}/);
-            if (fileIdMatch) {
-              attemptImageUrlForAsk = `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;
-              console.log('Ask: Using direct download URL:', attemptImageUrlForAsk);
-            }
-          }
-          
-          imageUrlEl.textContent = `Image URL: ${attemptImageUrlForAsk}`; // Display attempted URL
-          
-          imageEl.src = attemptImageUrlForAsk;
-          imageContainer.style.display = "block";
-          
-          imageEl.onload = function() {
-            console.log('Ask: Image loaded successfully via <img>');
-            imageEl.style.display = "block";
-            imageFrame.style.display = "none";
-            imageError.style.display = "none";
-          };
-          
-          imageEl.onerror = function() {
-            console.error('Ask: <img> failed for:', attemptImageUrlForAsk, '. Trying iframe for original:', originalImageUrlForAsk);
-            imageEl.style.display = "none"; // Hide failed img
-            if (originalImageUrlForAsk.includes('drive.google.com')) {
-                const fileIdMatch = originalImageUrlForAsk.match(/[-\w]{25,}/);
-                if (fileIdMatch) {
-                    const iframeUrl = `https://drive.google.com/file/d/${fileIdMatch[0]}/preview`;
-                    console.log('Ask: Using iframe URL:', iframeUrl);
-                    imageFrame.src = iframeUrl;
-                    imageFrame.style.display = "block";
-                    imageError.style.display = "none";
-                } else {
-                    console.error('Ask: GDrive URL but no File ID for iframe from:', originalImageUrlForAsk);
-                    imageFrame.style.display = "none";
-                    imageError.style.display = "block";
-                }
-            } else {
-                console.error('Ask: Non-GDrive image failed, no iframe fallback:', originalImageUrlForAsk);
-                imageFrame.style.display = "none";
-                imageError.style.display = "block";
-            }
-          };
+        console.log('Response status from /api/search:', response.status);
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Search API error response:', errorText);
+            let detail = errorText;
+            try {
+              const errJson = JSON.parse(errorText);
+              detail = errJson.message || errorText;
+            } catch (parseErr) { /* Do nothing, use raw errorText */ }
+            throw new Error(`API request failed: ${detail}`);
         }
-      } else {
-        answerEl.textContent = data.error || "No answer found.";
-        answerContainer.style.display = "block";
-      }
-    } catch (error) {
-      console.error('Fetch error for /api/ask:', error);
-      loadingEl.style.display = "none";
-      answerEl.textContent = "Error fetching data. Please try again later.";
-      answerContainer.style.display = "block";
-    }
-  });
+        const data = await response.json(); // data is the array from /api/search
+        console.log('Search results data received from /api/search:', data);
+        loadingEl.style.display = "none";
 
-  // New search form handler (with updated image logic)
-  document.getElementById("searchForm").addEventListener("submit", async function (e) {
-    e.preventDefault();
+        if (data && Array.isArray(data) && data.length > 0) {
+          resultsContainer.style.display = "block";
+          data.forEach(result => { // result is one item: { question, answer, image }
+            const resultElement = document.createElement("div");
+            resultElement.className = "search-result-item";
 
-    const keyword = document.getElementById("searchKeyword").value;
-    const loadingEl = document.getElementById("searchLoading");
-    const resultsContainer = document.getElementById("searchResults");
-
-    console.log('Search form submitted with keyword:', keyword);
-
-    loadingEl.style.display = "block";
-    resultsContainer.style.display = "none";
-    resultsContainer.innerHTML = ""; // Clear previous results
-
-    try {
-      console.log('Sending request to /api/search');
-      const response = await fetch("/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ keyword }),
-      });
-
-      console.log('Response status from /api/search:', response.status);
-      if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Search API error response:', errorText);
-          // Try to parse errorText as JSON if it's an error from our API
-          let detail = errorText;
-          try {
-            const errJson = JSON.parse(errorText);
-            detail = errJson.message || errorText;
-          } catch (parseErr) { /* Do nothing, use raw errorText */ }
-          throw new Error(`API request failed: ${detail}`);
-      }
-      const data = await response.json(); // data is the array from /api/search
-      console.log('Search results data received from /api/search:', data);
-      loadingEl.style.display = "none";
-
-      if (data && Array.isArray(data) && data.length > 0) {
-        resultsContainer.style.display = "block";
-        data.forEach(result => { // result is one item: { question, answer, image }
-          const resultElement = document.createElement("div");
-          resultElement.className = "search-result-item";
-
-          const questionStrong = document.createElement('strong');
-          questionStrong.textContent = 'Q: ';
-          resultElement.appendChild(questionStrong);
-          resultElement.appendChild(document.createTextNode(result.question || ''));
-          resultElement.appendChild(document.createElement('br'));
-
-          const answerStrong = document.createElement('strong');
-          answerStrong.textContent = 'A: ';
-          resultElement.appendChild(answerStrong);
-          resultElement.appendChild(document.createTextNode(result.answer || ''));
-          
-          if (result.image) {
+            // Add Question
+            const questionStrong = document.createElement('strong');
+            questionStrong.textContent = 'Q: ';
+            resultElement.appendChild(questionStrong);
+            resultElement.appendChild(document.createTextNode(result.question || ''));
             resultElement.appendChild(document.createElement('br'));
 
-            const itemImageContainer = document.createElement('div');
-            itemImageContainer.style.marginTop = '8px';
+            // Add Answer
+            const answerStrong = document.createElement('strong');
+            answerStrong.textContent = 'A: ';
+            resultElement.appendChild(answerStrong);
+            resultElement.appendChild(document.createTextNode(result.answer || ''));
+            
+            // Add Image (if it exists) with robust Google Drive handling
+            if (result.image) {
+              resultElement.appendChild(document.createElement('br')); // Space before image
 
-            const itemImg = document.createElement('img');
-            itemImg.style.maxWidth = '200px';
-            itemImg.style.maxHeight = '200px';
-            itemImg.style.objectFit = 'contain';
-            itemImg.style.borderRadius = '8px';
-            itemImg.style.display = 'block'; 
+              const itemImageContainer = document.createElement('div');
+              itemImageContainer.style.marginTop = '8px';
 
-            const itemIframe = document.createElement('iframe');
-            itemIframe.style.width = '200px'; 
-            itemIframe.style.height = '150px'; 
-            itemIframe.style.borderRadius = '8px';
-            itemIframe.style.border = 'none';
-            itemIframe.style.display = 'none';
+              const itemImgTag = document.createElement('img');
+              itemImgTag.style.maxWidth = '200px';
+              // itemImgTag.style.maxHeight = '200px'; // Optional: constrain height
+              // itemImgTag.style.objectFit = 'contain'; // Optional: how image fits
+              itemImgTag.style.borderRadius = '8px';
+              itemImgTag.style.display = 'block'; // Start by trying to display the img tag
 
-            const itemImgError = document.createElement('p');
-            itemImgError.style.color = '#ef4444';
-            itemImgError.style.fontSize = '0.8rem';
-            itemImgError.textContent = 'Unable to load image.';
-            itemImgError.style.display = 'none';
+              const itemIframeTag = document.createElement('iframe');
+              itemIframeTag.style.width = '200px'; 
+              itemIframeTag.style.height = '150px'; // Adjust as needed
+              itemIframeTag.style.borderRadius = '8px';
+              itemIframeTag.style.border = 'none';
+              itemIframeTag.style.display = 'none'; // Hide iframe initially
 
-            let originalImageUrl = String(result.image).trim();
-            let attemptImageUrl = originalImageUrl;
+              const itemImgErrorMsg = document.createElement('p');
+              itemImgErrorMsg.style.color = '#ef4444'; // Red color for error
+              itemImgErrorMsg.style.fontSize = '0.8rem';
+              itemImgErrorMsg.textContent = 'Unable to load image.';
+              itemImgErrorMsg.style.display = 'none'; // Hide error initially
 
-            if (originalImageUrl.includes('drive.google.com')) {
-              const fileIdMatch = originalImageUrl.match(/[-\w]{25,}/);
-              if (fileIdMatch) {
-                attemptImageUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;
-                console.log(`Search result: Attempting GDrive direct download: ${attemptImageUrl}`);
+              let originalImageUrl = "";
+              if (result.image && typeof result.image === 'string') {
+                originalImageUrl = result.image.trim();
               }
-            } else {
-              console.log(`Search result: Attempting direct image URL: ${attemptImageUrl}`);
-            }
-
-            itemImg.src = attemptImageUrl;
-
-            itemImg.onload = () => {
-              console.log('Search result: Image loaded successfully via <img> tag:', itemImg.src);
-              itemImg.style.display = 'block';
-              itemIframe.style.display = 'none';
-              itemImgError.style.display = 'none';
-            };
-
-            itemImg.onerror = () => {
-              console.error('Search result: <img> failed for:', attemptImageUrl, '. Trying iframe for original URL:', originalImageUrl);
-              itemImg.style.display = 'none'; 
               
-              if (originalImageUrl.includes('drive.google.com')) {
-                const fileIdMatch = originalImageUrl.match(/[-\w]{25,}/);
-                if (fileIdMatch) {
-                  const iframeUrl = `https://drive.google.com/file/d/${fileIdMatch[0]}/preview`;
-                  console.log(`Search result: Attempting GDrive iframe: ${iframeUrl}`);
-                  itemIframe.src = iframeUrl;
-                  itemIframe.style.display = 'block';
-                  itemImgError.style.display = 'none';
-                } else {
-                  console.error('Search result: GDrive URL but no File ID found for iframe from:', originalImageUrl);
-                  itemIframe.style.display = 'none';
-                  itemImgError.style.display = 'block';
-                }
-              } else {
-                console.error('Search result: Non-GDrive image failed to load and no iframe fallback for:', originalImageUrl);
-                itemIframe.style.display = 'none';
-                itemImgError.style.display = 'block';
-              }
-            };
+              let attemptImageUrl = originalImageUrl;
 
-            itemImageContainer.appendChild(itemImg);
-            itemImageContainer.appendChild(itemIframe);
-            itemImageContainer.appendChild(itemImgError);
-            resultElement.appendChild(itemImageContainer);
-          }
-          resultsContainer.appendChild(resultElement);
-        });
-      } else if (data && Array.isArray(data) && data.length === 0) {
+              if (originalImageUrl && originalImageUrl.includes('drive.google.com')) {
+                const fileIdMatch = originalImageUrl.match(/[-\w]{25,}/);
+                if (fileIdMatch && fileIdMatch[0]) {
+                  attemptImageUrl = `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;
+                  console.log(`Search Item: GDrive direct download URL: ${attemptImageUrl}`);
+                } else {
+                  console.log(`Search Item: GDrive URL, but no File ID found: ${originalImageUrl}`);
+                  // attemptImageUrl remains originalImageUrl, might still work or fail gracefully
+                }
+              }
+
+              if (attemptImageUrl) {
+                itemImgTag.src = attemptImageUrl;
+
+                itemImgTag.onload = () => {
+                  console.log('Search Item: Image loaded successfully via <img>:', itemImgTag.src);
+                  itemImgTag.style.display = 'block';
+                  itemIframeTag.style.display = 'none';
+                  itemImgErrorMsg.style.display = 'none';
+                };
+
+                itemImgTag.onerror = () => {
+                  console.error('Search Item: <img> failed for:', attemptImageUrl, '. Trying iframe for original:', originalImageUrl);
+                  itemImgTag.style.display = 'none'; 
+                  
+                  if (originalImageUrl && originalImageUrl.includes('drive.google.com')) {
+                    const fileIdMatch = originalImageUrl.match(/[-\w]{25,}/);
+                    if (fileIdMatch && fileIdMatch[0]) {
+                      const iframeUrl = `https://drive.google.com/file/d/${fileIdMatch[0]}/preview`;
+                      console.log(`Search Item: GDrive iframe URL: ${iframeUrl}`);
+                      itemIframeTag.src = iframeUrl;
+                      itemIframeTag.style.display = 'block';
+                      itemImgErrorMsg.style.display = 'none';
+                    } else {
+                      console.error('Search Item: GDrive URL but no File ID for iframe from:', originalImageUrl);
+                      itemIframeTag.style.display = 'none';
+                      itemImgErrorMsg.style.display = 'block';
+                    }
+                  } else {
+                    console.error('Search Item: Non-GDrive image failed, no iframe fallback for:', originalImageUrl);
+                    itemIframeTag.style.display = 'none';
+                    itemImgErrorMsg.style.display = 'block';
+                  }
+                };
+              } else {
+                // No valid image URL to attempt
+                itemImgErrorMsg.style.display = 'block';
+              }
+
+              itemImageContainer.appendChild(itemImgTag);
+              itemImageContainer.appendChild(itemIframeTag);
+              itemImageContainer.appendChild(itemImgErrorMsg);
+              resultElement.appendChild(itemImageContainer);
+            }
+            resultsContainer.appendChild(resultElement);
+          });
+        } else if (data && Array.isArray(data) && data.length === 0) {
+          resultsContainer.style.display = "block";
+          resultsContainer.innerHTML = '<div class="search-result-item">No results found.</div>';
+        } else {
+          console.error('Search results: Data received from API is not a valid array or is undefined/null', data);
+          resultsContainer.style.display = "block";
+          resultsContainer.innerHTML = '<div class="search-result-item">Error: Could not properly load search results.</div>';
+        }
+      } catch (error) {
+        console.error('Search error in frontend:', error);
+        loadingEl.style.display = "none";
         resultsContainer.style.display = "block";
-        resultsContainer.innerHTML = '<div class="search-result-item">No results found.</div>';
-      } else {
-        console.error('Search results: Data received from API is not a valid array or is undefined/null', data);
-        resultsContainer.style.display = "block";
-        resultsContainer.innerHTML = '<div class="search-result-item">Error: Could not properly load search results.</div>';
+        resultsContainer.innerHTML = `<div class="search-result-item">Error searching. ${error.message || 'Please try again later.'}</div>`;
       }
-    } catch (error) {
-      console.error('Search error in frontend:', error);
-      loadingEl.style.display = "none";
-      resultsContainer.style.display = "block";
-      resultsContainer.innerHTML = `<div class="search-result-item">Error searching. ${error.message} Please try again later.</div>`;
-    }
-  });
-</script>
+    });
