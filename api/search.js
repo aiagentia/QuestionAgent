@@ -16,7 +16,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/keyword-search';
+    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/keyword-search'; // Ensure this is your correct keyword search webhook
     console.log('Search API - Sending request to n8n webhook:', n8nWebhookUrl);
     console.log('Search API - Request payload:', JSON.stringify({ keyword: keyword.trim() }));
 
@@ -43,21 +43,20 @@ export default async function handler(req, res) {
     if (Array.isArray(dataFromN8N) &&
         dataFromN8N.length > 0 &&
         dataFromN8N[0] &&
-        typeof dataFromN8N[0] === 'object' &&
+        typeof dataFromN8N[0] === 'object' && dataFromN8N[0] !== null && // Ensure dataFromN8N[0] is an object
         dataFromN8N[0].json &&
         Array.isArray(dataFromN8N[0].json)) {
       console.log("Search API - n8n data is wrapped; extracting results array from dataFromN8N[0].json.");
       resultsToProcess = dataFromN8N[0].json;
     }
-    // Scenario 2: n8n sends an array of results directly.
+    // Scenario 2: n8n sends an array of results directly. (YOUR CURRENT CASE)
     else if (Array.isArray(dataFromN8N)) {
       console.log("Search API - n8n data appears to be a direct array of results.");
-      resultsToProcess = dataFromN8N;
+      resultsToProcess = dataFromN8N; // This should assign your array of 3 items
     }
-    // Scenario 3: n8n sends a single object directly (NEW CASE BASED ON YOUR LOGS)
+    // Scenario 3: n8n sends a single object directly
     else if (typeof dataFromN8N === 'object' && dataFromN8N !== null && !Array.isArray(dataFromN8N)) {
       console.log("Search API - n8n data is a single object. Wrapping it in an array.");
-      // Check if the object is empty. If so, treat as no results.
       if (Object.keys(dataFromN8N).length === 0) {
           console.log("Search API - Single object from n8n is empty. Treating as no results.");
           resultsToProcess = [];
@@ -67,17 +66,15 @@ export default async function handler(req, res) {
     }
     // Scenario 4: Unexpected format or empty response
     else {
-      console.warn("Search API - Unexpected data format from n8n or empty response. RAW data logged above. Returning empty results.");
+      console.warn("Search API - Unexpected data format from n8n or empty response. RAW data logged above. Defaulting to empty results.");
       resultsToProcess = [];
     }
 
-    // Ensure resultsToProcess is definitely an array before mapping.
-    if (!Array.isArray(resultsToProcess)) {
-        console.warn("Search API - Extracted source for results (resultsToProcess) is not an array. Defaulting to empty. Value:", JSON.stringify(resultsToProcess));
+    if (!Array.isArray(resultsToProcess)) { // Defensive check
+        console.warn("Search API - Extracted source for results (resultsToProcess) is not an array after initial checks. Defaulting to empty. Value:", JSON.stringify(resultsToProcess));
         resultsToProcess = [];
     }
 
-    // Map the extracted results to the structure expected by the frontend.
     const results = resultsToProcess.map(item => {
       if (typeof item === 'object' && item !== null) {
         return {
@@ -91,19 +88,17 @@ export default async function handler(req, res) {
     });
 
     console.log('Search API - Processed results to be sent to frontend:', JSON.stringify(results, null, 2));
-    return res.status(200).json(results);
+    return res.status(200).json(results); // This should send the full array of results
 
   } catch (error) {
     console.error("Search API - Critical error in handler:", error);
     if (error.stack) {
         console.error("Search API - Error stack:", error.stack);
     }
-
     if (error instanceof SyntaxError && error.message.includes("JSON")) {
       console.error("Search API - Error parsing JSON from n8n. n8n might have sent HTML or malformed JSON.");
       return res.status(502).json({ success: false, message: 'Received invalid data structure from the search service.' });
     }
-
     return res.status(500).json({ success: false, message: 'Internal server error processing your search request.' });
   }
 }
