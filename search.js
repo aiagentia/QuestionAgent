@@ -10,7 +10,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/search-keyword'; // Update this with your actual n8n webhook URL
+    const n8nWebhookUrl = 'https://n8n-c4yc.onrender.com/webhook/search-question'; // Update this with your actual n8n webhook URL
 
     const n8nResponse = await fetch(n8nWebhookUrl, {
       method: 'POST',
