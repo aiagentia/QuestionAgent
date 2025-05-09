@@ -325,17 +325,21 @@
       const loadingEl = document.getElementById("searchLoading");
       const resultsContainer = document.getElementById("searchResults");
 
+      console.log('Search form submitted with keyword:', keyword);
+
       loadingEl.style.display = "block";
       resultsContainer.style.display = "none";
       resultsContainer.innerHTML = "";
 
       try {
+        console.log('Sending request to /api/search');
         const response = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ keyword }),
         });
 
+        console.log('Response status:', response.status);
         const data = await response.json();
         console.log('Search results:', data);
         loadingEl.style.display = "none";
