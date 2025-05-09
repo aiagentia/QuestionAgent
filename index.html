@@ -160,6 +160,7 @@
       <p id="answer"></p>
       <div id="imageContainer" style="display: none; margin-top: 1rem;">
         <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);" />
+        <iframe id="imageFrame" style="display: none; width: 100%; height: 400px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);"></iframe>
         <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
         <p id="imageUrl" style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
       </div>
@@ -176,6 +177,7 @@
       const answerEl = document.getElementById("answer");
       const imageContainer = document.getElementById("imageContainer");
       const imageEl = document.getElementById("image");
+      const imageFrame = document.getElementById("imageFrame");
       const imageError = document.getElementById("imageError");
       const imageUrlEl = document.getElementById("imageUrl");
 
@@ -185,6 +187,8 @@
       imageContainer.style.display = "none";
       imageError.style.display = "none";
       imageUrlEl.textContent = "";
+      imageEl.style.display = "block";
+      imageFrame.style.display = "none";
 
       try {
         const response = await fetch("/api/ask", {
@@ -210,36 +214,38 @@
               // Extract the file ID
               const fileId = imageUrl.match(/[-\w]{25,}/);
               if (fileId) {
-                // Try different Google Drive URL formats
                 const fileIdStr = fileId[0];
-                imageUrl = `https://drive.google.com/file/d/${fileIdStr}/preview`;
-                console.log('Converted to preview URL:', imageUrl);
+                // Try direct download URL first
+                imageUrl = `https://drive.google.com/uc?export=download&id=${fileIdStr}`;
+                console.log('Using direct download URL:', imageUrl);
               }
             }
             
             // Display the URL for debugging
             imageUrlEl.textContent = `Image URL: ${imageUrl}`;
             
+            // Try loading with img tag first
             imageEl.src = imageUrl;
             imageContainer.style.display = "block";
             
             imageEl.onload = function() {
               console.log('Image loaded successfully');
               imageError.style.display = "none";
+              imageFrame.style.display = "none";
             };
             
             imageEl.onerror = function() {
-              console.error('Image failed to load:', imageUrl);
-              imageError.style.display = "block";
-              
-              // Try alternative URL format
-              if (imageUrl.includes('drive.google.com')) {
-                const fileId = imageUrl.match(/[-\w]{25,}/);
-                if (fileId) {
-                  const alternativeUrl = `https://drive.google.com/uc?export=view&id=${fileId[0]}`;
-                  console.log('Trying alternative URL:', alternativeUrl);
-                  imageEl.src = alternativeUrl;
-                }
+              console.error('Image failed to load, trying iframe:', imageUrl);
+              // If img fails, try iframe
+              const fileId = imageUrl.match(/[-\w]{25,}/);
+              if (fileId) {
+                const iframeUrl = `https://drive.google.com/file/d/${fileId[0]}/preview`;
+                imageFrame.src = iframeUrl;
+                imageFrame.style.display = "block";
+                imageEl.style.display = "none";
+                imageError.style.display = "none";
+              } else {
+                imageError.style.display = "block";
               }
             };
           }
