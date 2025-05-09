@@ -38,15 +38,14 @@ export default async function handler(req, res) {
     const dataFromN8N = await n8nResponse.json();
     console.log("Search API - RAW Data received from n8n:", JSON.stringify(dataFromN8N, null, 2));
 
-    // Process the results based on your n8n node's output format
+    // Map the results for the frontend
     let results = [];
     if (Array.isArray(dataFromN8N)) {
-      results = dataFromN8N.map(item => {
-        if (item.json && item.json.answer) {
-          return { answer: item.json.answer };
-        }
-        return null;
-      }).filter(Boolean);
+      results = dataFromN8N.map(item => ({
+        question: item.question,
+        answer: item.answer,
+        image: item.image
+      }));
     }
 
     console.log('Search API - Processed results:', results);
