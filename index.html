@@ -38,14 +38,14 @@
       color: var(--text);
       min-height: 100vh;
       display: flex;
-      align-items: center; /* Vertically center the container if page is taller */
-      justify-content: center; /* Horizontally center the container */
-      padding: 24px; /* Padding around the container */
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
     }
 
     .container {
       width: 100%;
-      max-width: 1400px; /* INCREASED: Allow container to be wider */
+      max-width: 1400px;
       background: var(--card);
       padding: 2.5rem;
       border-radius: 20px;
@@ -54,47 +54,60 @@
 
     .sections-wrapper {
       display: flex;
-      gap: 2.5rem; /* INCREASED: More space between sections */
-      flex-wrap: wrap; /* Allow sections to wrap if not enough space */
+      gap: 2.5rem;
+      flex-wrap: wrap;
     }
 
     .section {
-      flex: 1; /* Allow sections to grow and shrink */
-      min-width: 380px; /* INCREASED: Minimum width for each section */
-                      /* If (min-width * 2 + gap) > sections-wrapper width, they will wrap */
+      flex: 1;
+      min-width: 380px;
       border: 1px solid var(--border-color);
       border-radius: 10px;
-      overflow: hidden; /* Important for border-radius and child overflow */
+      overflow: hidden;
       background-color: var(--card);
       display: flex;
-      flex-direction: column; /* Stack header and content vertically */
+      flex-direction: column;
     }
 
-    .section-main-header {
+    /* --- Main Centered Title for the Entire Section --- */
+    .section-main-heading {
+      font-size: 1.8rem; /* Adjust size as needed */
+      font-weight: 700;
+      color: var(--text);
+      text-align: center;
+      padding: 0.75rem 0; /* Add some padding */
+      margin-bottom: 0.5rem; /* Space below this title */
+      letter-spacing: -0.02em;
+      border-bottom: 1px solid var(--border-color); /* Optional separator */
+    }
+    /* --- End Main Centered Title --- */
+
+
+    .section-clickable-header { /* Renamed from section-main-header for clarity */
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 15px;
+      padding: 10px 15px; /* Slightly less padding */
       cursor: pointer;
       background-color: var(--border-color);
       border-bottom: 1px solid #2a3441;
       transition: background-color 0.2s ease;
-      flex-shrink: 0; /* Prevent header from shrinking */
+      flex-shrink: 0;
     }
-    .section-main-header:hover {
+    .section-clickable-header:hover {
       background-color: #4B5563;
     }
 
-    .section-main-title {
-      font-size: 1.25rem;
+    .section-subtitle { /* For "KA" and "Search Keyword" */
+      font-size: 1.15rem; /* Adjusted size slightly */
       font-weight: 600;
       color: var(--text);
       margin: 0;
     }
 
     .section-expand-minimize-icon {
-      width: 24px;
-      height: 24px;
+      width: 22px; /* Adjusted size slightly */
+      height: 22px;/* Adjusted size slightly */
       border-radius: 50%;
       cursor: pointer;
       display: flex;
@@ -102,7 +115,7 @@
       align-items: center;
       font-weight: bold;
       color: var(--section-icon-symbol-color);
-      font-size: 16px;
+      font-size: 14px; /* Adjusted size slightly */
       line-height: 1;
       transition: background-color 0.3s ease, transform 0.3s ease;
       flex-shrink: 0;
@@ -124,43 +137,40 @@
 
     .section-content {
       padding: 1.25rem;
-      flex-grow: 1; /* Allow content to take available vertical space */
+      flex-grow: 1;
       overflow-y: auto;
       overflow-x: hidden;
-      max-height: 55vh; /* INCREASED: More vertical space before scroll. Adjust as needed (e.g., 450px, 60vh) */
+      max-height: 55vh;
     }
 
-    /* Old expand text button - ensure it's GONE */
     .expand-btn {
       display: none !important;
     }
 
-    /* Full section expansion styles */
     .section.expanded {
-      flex-basis: 100% !important; /* Take full basis when expanded */
-      flex-grow: 1 !important;    /* Allow it to grow to fill */
-      min-width: 100%;           /* Ensure it takes full width */
+      flex-basis: 100% !important;
+      flex-grow: 1 !important;
+      min-width: 100%;
     }
     .section.hidden-by-expansion {
       display: none !important;
     }
 
-
-    /* Media Queries for Responsiveness */
-    /* Adjust breakpoint if sections wrap too early due to increased min-width */
-    /* (380px * 2) + 2.5rem (40px) = 760 + 40 = 800px. So 820px breakpoint is okay. */
     @media (max-width: 820px) {
       .sections-wrapper {
-        flex-direction: column; /* Stack sections vertically */
-        gap: 1.5rem; /* Space between stacked sections */
+        flex-direction: column;
+        gap: 1.5rem;
       }
       .section {
-        flex-basis: auto !important; /* Reset flex-basis for stacking */
-        min-width: auto; /* Allow sections to take full width when stacked */
-        margin-bottom: 0; /* Gap handles spacing */
+        flex-basis: auto !important;
+        min-width: auto;
+        margin-bottom: 0;
+      }
+      .section-main-heading {
+          font-size: 1.6rem; /* Adjust for smaller screens */
       }
       .section-content {
-          max-height: 60vh; /* Potentially allow more height on smaller screens */
+          max-height: 60vh;
       }
     }
 
@@ -305,12 +315,15 @@
       font-weight: 600;
     }
 
-    @media (max-width: 640px) { /* Smaller mobile screens */
+    @media (max-width: 640px) {
       .container {
         padding: 1.5rem;
       }
-      .section-main-title {
-          font-size: 1.1rem;
+      .section-main-heading {
+          font-size: 1.5rem; /* Further adjust for smaller screens */
+      }
+      .section-subtitle {
+          font-size: 1.05rem;
       }
       #askForm, #searchForm {
         flex-direction: column;
@@ -329,8 +342,9 @@
   <div class="container">
     <div class="sections-wrapper">
       <div class="section" id="searchArticleSection">
-        <div class="section-main-header">
-          <div class="section-main-title">KA</div>
+        <h2 class="section-main-heading">Search Article</h2> <!-- RESTORED MAIN TITLE -->
+        <div class="section-clickable-header"> <!-- Renamed for clarity -->
+          <div class="section-subtitle">KA</div> <!-- Renamed for clarity -->
           <span class="section-expand-minimize-icon" data-action="expand"></span>
         </div>
         <div class="section-content">
@@ -353,8 +367,9 @@
       </div>
 
       <div class="section" id="searchKnowledgeSection">
-        <div class="section-main-header">
-          <div class="section-main-title">Search Keyword</div>
+        <h2 class="section-main-heading">Search Knowledge Base</h2> <!-- RESTORED MAIN TITLE -->
+        <div class="section-clickable-header"> <!-- Renamed for clarity -->
+          <div class="section-subtitle">Search Keyword</div> <!-- Renamed for clarity -->
           <span class="section-expand-minimize-icon" data-action="expand"></span>
         </div>
         <div class="section-content">
@@ -620,14 +635,14 @@
       resetSearchBtn.style.display = "none";
     });
 
-    // --- Full Interface Section Expansion Logic (Original Functionality with Icons) ---
+    // --- Full Interface Section Expansion Logic ---
     document.addEventListener('DOMContentLoaded', function () {
         const searchArticleSect = document.getElementById('searchArticleSection');
         const searchKnowledgeSect = document.getElementById('searchKnowledgeSection');
 
-        // Correctly select the icons associated with each main section header
-        const expandArticleIcon = searchArticleSect.querySelector('.section-main-header .section-expand-minimize-icon');
-        const expandKnowledgeIcon = searchKnowledgeSect.querySelector('.section-main-header .section-expand-minimize-icon');
+        // Select the icons from within the .section-clickable-header
+        const expandArticleIcon = searchArticleSect.querySelector('.section-clickable-header .section-expand-minimize-icon');
+        const expandKnowledgeIcon = searchKnowledgeSect.querySelector('.section-clickable-header .section-expand-minimize-icon');
 
 
         function handleFullSectionExpansion(sectionToHandle, iconForSection, otherSection, iconForOtherSection) {
@@ -651,11 +666,12 @@
         }
 
         if (expandArticleIcon && expandKnowledgeIcon) {
-            searchArticleSect.querySelector('.section-main-header').addEventListener('click', () => {
+            // Make the .section-clickable-header trigger the expansion
+            searchArticleSect.querySelector('.section-clickable-header').addEventListener('click', () => {
                 handleFullSectionExpansion(searchArticleSect, expandArticleIcon, searchKnowledgeSect, expandKnowledgeIcon);
             });
 
-            searchKnowledgeSect.querySelector('.section-main-header').addEventListener('click', () => {
+            searchKnowledgeSect.querySelector('.section-clickable-header').addEventListener('click', () => {
                 handleFullSectionExpansion(searchKnowledgeSect, expandKnowledgeIcon, searchArticleSect, expandArticleIcon);
             });
         }
