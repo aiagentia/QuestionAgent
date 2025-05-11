@@ -12,6 +12,7 @@
       --bg: #0f172a;
       --text: #e2e8f0;
       --card: #1e293b;
+      --primary-light: #7c7ee1; /* For expand/minimize buttons */
     }
 
     * {
@@ -33,7 +34,7 @@
 
     .container {
       width: 100%;
-      max-width: 800px; /* Max width of the whole container */
+      max-width: 800px; 
       background: var(--card);
       padding: 2rem;
       border-radius: 16px;
@@ -52,46 +53,83 @@
 
     .sections-wrapper {
       display: flex;
-      gap: 1.5rem; /* Space between the two sections when side-by-side */
+      gap: 1.5rem; 
+      flex-wrap: wrap; /* Important for allowing an item to take full width */
     }
 
-    .sections-wrapper > .section {
-      flex: 1; /* Each section takes equal width */
-      margin-bottom: 0; /* Override original margin for side-by-side */
-      padding-bottom: 0; /* Override original padding for side-by-side */
-      border-bottom: none; /* Override original border for side-by-side */
-      /* Sections will act as cards themselves */
+    .section {
+      flex: 1; /* Default to sharing space */
+      min-width: 0; /* Allow shrinking below content size if needed */
+      border: 1px solid transparent; /* Placeholder for consistent spacing if needed */
     }
     
-    /* Restore original section styling for stacking on smaller screens */
-    @media (max-width: 820px) { /* Breakpoint for stacking sections */
+    .section.expanded {
+      flex-basis: 100% !important; /* Take full width of the flex container */
+      flex-grow: 1 !important; /* Ensure it can grow to fill space */
+    }
+
+    .section.hidden-by-expansion {
+      display: none !important;
+    }
+
+
+    @media (max-width: 820px) { 
       .sections-wrapper {
         flex-direction: column;
-        gap: 0; /* Rely on original section margins when stacked */
+        gap: 0; 
       }
-      .sections-wrapper > .section {
-        margin-bottom: 2rem; /* Original */
-        padding-bottom: 2rem; /* Original */
-        border-bottom: 1px solid rgba(99, 102, 241, 0.2); /* Original */
+      .section { /* Restore original section stacking styles */
+        flex-basis: auto !important; /* Reset flex-basis for stacking */
+        margin-bottom: 2rem; 
+        padding-bottom: 2rem; 
+        border-bottom: 1px solid rgba(99, 102, 241, 0.2); 
       }
-      .sections-wrapper > .section:last-child {
-        margin-bottom: 0; /* Original */
-        padding-bottom: 0; /* Original */
-        border-bottom: none; /* Original */
+      .section:last-child {
+        margin-bottom: 0; 
+        padding-bottom: 0; 
+        border-bottom: none; 
       }
+      .section.expanded { /* When stacked, expanded still means it's the one focused */
+         margin-bottom: 2rem; /* Maintain some margin even when expanded and stacked */
+      }
+      .section.expanded:last-child {
+        margin-bottom: 0;
+      }
+    }
+
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem; 
     }
 
     .section-title {
       font-size: 1.2rem;
       color: var(--text);
-      margin-bottom: 1rem;
       opacity: 0.8;
+      margin-bottom: 0; /* Handled by section-header */
     }
+
+    .expand-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      background-color: var(--primary-light);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .expand-btn:hover {
+      background-color: var(--primary);
+    }
+
 
     #askForm, #searchForm {
       display: flex;
       gap: 10px;
-      margin-bottom: 1rem; /* Reduced margin slightly */
+      margin-bottom: 1rem; 
     }
 
     input {
@@ -122,7 +160,7 @@
       transition: transform 0.2s ease, background 0.3s ease;
     }
 
-    button:hover {
+    button:hover:not(.expand-btn):not(.reset-button) { /* Avoid double hover effect */
       background: #4f46e5;
       transform: translateY(-2px);
     }
@@ -137,7 +175,7 @@
 
     .reset-button {
       padding: 0.8rem 1.5rem;
-      background: #718096; /* Neutral gray, or var(--primary) if preferred */
+      background: #718096; 
       color: white;
       border: none;
       border-radius: 8px;
@@ -145,8 +183,8 @@
       cursor: pointer;
       transition: transform 0.2s ease, background 0.3s ease;
       margin-top: 1rem;
-      display: block; /* takes full width of its container or use inline-block with text-align on parent */
-      width: fit-content; /* Or a fixed width, or 100% */
+      display: block; 
+      width: fit-content; 
       margin-left: auto;
       margin-right: auto;
     }
@@ -210,12 +248,12 @@
       margin-bottom: 0;
     }
 
-    @media (max-width: 640px) { /* For form elements specifically */
+    @media (max-width: 640px) { 
       #askForm, #searchForm {
         flex-direction: column;
       }
 
-      #askForm button, #searchForm button { /* Ensure all buttons in forms take full width */
+      #askForm button, #searchForm button { 
         width: 100%;
       }
       
@@ -227,14 +265,17 @@
 </head>
 <body>
   <div class="container">
-    <h2>KA</h2> <!-- MODIFIED TEXT -->
+    <h2>KA</h2>
     
-    <div class="sections-wrapper"> <!-- NEW WRAPPER FOR SIDE-BY-SIDE LAYOUT -->
-      <div class="section">
-        <div class="section-title">Search Article</div> <!-- MODIFIED TEXT -->
+    <div class="sections-wrapper">
+      <div class="section" id="searchArticleSection">
+        <div class="section-header">
+          <div class="section-title">Search Article</div>
+          <button class="expand-btn" data-action="expand">Expand</button>
+        </div>
         <form id="askForm">
           <input type="text" id="question" required placeholder="What would you like to know?" />
-          <button type="submit">Search</button> <!-- MODIFIED TEXT -->
+          <button type="submit">Search</button>
         </form>
         <p id="loading" class="loading">Processing your question...</p>
         <div class="result" id="answerContainer" style="display: none;">
@@ -245,12 +286,15 @@
             <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
             <p id="imageUrl" style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
           </div>
-          <button type="button" id="resetAskButton" class="reset-button" style="display: none;">Reset</button> <!-- NEW RESET BUTTON -->
+          <button type="button" id="resetAskButton" class="reset-button" style="display: none;">Reset</button>
         </div>
       </div>
 
-      <div class="section">
-        <div class="section-title">Search Knowledge Base</div>
+      <div class="section" id="searchKnowledgeSection">
+        <div class="section-header">
+          <div class="section-title">Search Knowledge Base</div>
+          <button class="expand-btn" data-action="expand">Expand</button>
+        </div>
         <form id="searchForm">
           <input type="text" id="searchKeyword" required placeholder="Enter a keyword to search..." />
           <button type="submit" class="search-button">
@@ -259,7 +303,7 @@
         </form>
         <p id="searchLoading" class="loading">Searching...</p>
         <div id="searchResults" style="display: none;"></div> 
-        <button type="button" id="resetSearchButton" class="reset-button" style="display: none;">Reset</button> <!-- NEW RESET BUTTON -->
+        <button type="button" id="resetSearchButton" class="reset-button" style="display: none;">Reset</button>
       </div>
     </div>
   </div>
@@ -279,9 +323,7 @@
 
     askForm.addEventListener("submit", async function (e) {
       e.preventDefault();
-
       const question = questionInput.value;
-      
       loadingEl.style.display = "block";
       answerContainer.style.display = "none";
       resetAskBtn.style.display = "none";
@@ -300,43 +342,33 @@
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question }),
         });
-
         const data = await response.json();
         loadingEl.style.display = "none";
-
-        answerContainer.style.display = "block"; // Show container for answer or error
-        resetAskBtn.style.display = "block"; // Show reset button
-
+        answerContainer.style.display = "block";
+        resetAskBtn.style.display = "block";
         if (data.success && data.answer) {
           answerEl.textContent = data.answer;
-          
           if (data.image) {
             let originalImageUrlForAsk = "";
             if (data.image && typeof data.image === 'string') {
                 originalImageUrlForAsk = data.image.trim();
             }
-            
             let attemptImageUrlForAsk = originalImageUrlForAsk;
-
             if (originalImageUrlForAsk && originalImageUrlForAsk.includes('drive.google.com')) {
               const fileIdMatch = originalImageUrlForAsk.match(/[-\w]{25,}/);
               if (fileIdMatch && fileIdMatch[0]) {
                 attemptImageUrlForAsk = `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;
               }
             }
-            
             imageUrlEl.textContent = `Image URL: ${attemptImageUrlForAsk || 'N/A'}`;
-            
             if (attemptImageUrlForAsk) {
                 imageEl.src = attemptImageUrlForAsk;
                 imageContainer.style.display = "block";
-                
                 imageEl.onload = function() {
                   imageEl.style.display = "block";
                   imageFrame.style.display = "none";
                   imageError.style.display = "none";
                 };
-                
                 imageEl.onerror = function() {
                   imageEl.style.display = "none"; 
                   if (originalImageUrlForAsk && originalImageUrlForAsk.includes('drive.google.com')) {
@@ -368,8 +400,8 @@
         console.error('Fetch error for /api/ask:', error);
         loadingEl.style.display = "none";
         answerEl.textContent = "Error fetching data. Please try again later.";
-        answerContainer.style.display = "block"; // Also show container for error
-        resetAskBtn.style.display = "block"; // Also show reset on error
+        answerContainer.style.display = "block"; 
+        resetAskBtn.style.display = "block"; 
       }
     });
 
@@ -388,7 +420,6 @@
       resetAskBtn.style.display = "none";
     });
 
-
     const searchForm = document.getElementById("searchForm");
     const searchKeywordInput = document.getElementById("searchKeyword");
     const searchLoadingEl = document.getElementById("searchLoading");
@@ -397,91 +428,72 @@
 
     searchForm.addEventListener("submit", async function (e) {
       e.preventDefault();
-
       const keyword = searchKeywordInput.value;
-
       searchLoadingEl.style.display = "block";
       searchResultsContainer.style.display = "none";
       searchResultsContainer.innerHTML = ""; 
       resetSearchBtn.style.display = "none";
-
       try {
         const response = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ keyword }),
         });
-
         if (!response.ok) {
             const errorText = await response.text();
             let detail = errorText;
-            try {
-              const errJson = JSON.parse(errorText);
-              detail = errJson.message || errorText;
-            } catch (parseErr) { /* Do nothing */ }
+            try { const errJson = JSON.parse(errorText); detail = errJson.message || errorText; } catch (parseErr) {}
             throw new Error(`API request failed: ${detail}`);
         }
         const data = await response.json(); 
         searchLoadingEl.style.display = "none";
-        searchResultsContainer.style.display = "block"; // Show results container
-        resetSearchBtn.style.display = "block"; // Show reset button
-
+        searchResultsContainer.style.display = "block"; 
+        resetSearchBtn.style.display = "block"; 
         if (data && Array.isArray(data) && data.length > 0) {
           data.forEach(result => { 
             const resultElement = document.createElement("div");
             resultElement.className = "search-result-item";
-
             const questionStrong = document.createElement('strong');
             questionStrong.textContent = 'Q: ';
             resultElement.appendChild(questionStrong);
             resultElement.appendChild(document.createTextNode(result.question || ''));
             resultElement.appendChild(document.createElement('br'));
-
             const answerStrong = document.createElement('strong');
             answerStrong.textContent = 'A: ';
             resultElement.appendChild(answerStrong);
             resultElement.appendChild(document.createTextNode(result.answer || ''));
-            
             if (result.image) {
               resultElement.appendChild(document.createElement('br')); 
-
               const itemImageContainer = document.createElement('div');
               itemImageContainer.style.marginTop = '8px';
-
               const itemImgTag = document.createElement('img');
               itemImgTag.style.maxWidth = '350px'; 
               itemImgTag.style.maxHeight = '300px'; 
               itemImgTag.style.objectFit = 'contain';
               itemImgTag.style.borderRadius = '8px';
               itemImgTag.style.display = 'block'; 
-
               const itemIframeTag = document.createElement('iframe');
               itemIframeTag.style.width = '350px'; 
               itemIframeTag.style.height = '250px'; 
               itemIframeTag.style.borderRadius = '8px';
               itemIframeTag.style.border = 'none';
               itemIframeTag.style.display = 'none'; 
-
               const itemImgErrorMsg = document.createElement('p');
               itemImgErrorMsg.style.color = '#ef4444';
               itemImgErrorMsg.style.fontSize = '0.8rem';
               itemImgErrorMsg.textContent = 'Unable to load image.';
               itemImgErrorMsg.style.display = 'none'; 
-
               let originalImageUrlForItem = "";
               if (result.image && typeof result.image === 'string') {
                 originalImageUrlForItem = result.image.trim();
               }
-              
               let attemptImageUrlForItem = originalImageUrlForItem;
-
               if (originalImageUrlForItem && originalImageUrlForItem.includes('drive.google.com')) {
                 const fileIdMatch = originalImageUrlForItem.match(/[-\w]{25,}/);
                 if (fileIdMatch && fileIdMatch[0]) {
                   attemptImageUrlForItem = `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;
                 }
               }
-
               if (attemptImageUrlForItem) {
                 itemImgTag.src = attemptImageUrlForItem;
                 itemImgTag.onload = () => {
@@ -506,11 +518,11 @@
                     itemIframeTag.style.display = 'none';
                     itemImgErrorMsg.style.display = 'block';
                   } else { 
-                     itemImgErrorMsg.style.display = 'block'; // Show error if no URL at all
+                     itemImgErrorMsg.style.display = 'block';
                   }
                 };
               } else { 
-                itemImgErrorMsg.style.display = 'block'; // Show error if no URL
+                itemImgErrorMsg.style.display = 'block';
               }
               itemImageContainer.appendChild(itemImgTag);
               itemImageContainer.appendChild(itemIframeTag);
@@ -528,9 +540,9 @@
       } catch (error) {
         console.error('Search error in frontend:', error);
         searchLoadingEl.style.display = "none";
-        searchResultsContainer.style.display = "block"; // Show container for error
+        searchResultsContainer.style.display = "block"; 
         searchResultsContainer.innerHTML = `<div class="search-result-item">Error searching. ${error.message || 'Please try again later.'}</div>`;
-        resetSearchBtn.style.display = "block"; // Show reset on error
+        resetSearchBtn.style.display = "block"; 
       }
     });
 
@@ -541,6 +553,47 @@
       searchResultsContainer.style.display = "none";
       resetSearchBtn.style.display = "none";
     });
+
+    // Expand/Minimize Logic
+    const searchArticleSect = document.getElementById('searchArticleSection');
+    const searchKnowledgeSect = document.getElementById('searchKnowledgeSection');
+    const expandArticleButton = searchArticleSect.querySelector('.expand-btn');
+    const expandKnowledgeButton = searchKnowledgeSect.querySelector('.expand-btn');
+
+    function handleSectionExpansion(sectionToHandle, buttonForSection, otherSection, buttonForOtherSection) {
+        const isExpanding = buttonForSection.dataset.action === 'expand';
+
+        if (isExpanding) {
+            // If the other section is currently expanded, minimize it first
+            if (buttonForOtherSection.dataset.action === 'minimize') {
+                otherSection.classList.remove('expanded');
+                searchArticleSect.classList.remove('hidden-by-expansion'); // Make both potentially visible
+                searchKnowledgeSect.classList.remove('hidden-by-expansion');
+                buttonForOtherSection.textContent = 'Expand';
+                buttonForOtherSection.dataset.action = 'expand';
+            }
+
+            // Now expand the current section
+            sectionToHandle.classList.add('expanded');
+            otherSection.classList.add('hidden-by-expansion');
+            buttonForSection.textContent = 'Minimize';
+            buttonForSection.dataset.action = 'minimize';
+        } else { // Minimizing
+            sectionToHandle.classList.remove('expanded');
+            otherSection.classList.remove('hidden-by-expansion'); // Make the other section visible
+            buttonForSection.textContent = 'Expand';
+            buttonForSection.dataset.action = 'expand';
+        }
+    }
+
+    expandArticleButton.addEventListener('click', () => {
+        handleSectionExpansion(searchArticleSect, expandArticleButton, searchKnowledgeSect, expandKnowledgeButton);
+    });
+
+    expandKnowledgeButton.addEventListener('click', () => {
+        handleSectionExpansion(searchKnowledgeSect, expandKnowledgeButton, searchArticleSect, expandArticleButton);
+    });
+
   </script>
 </body>
 </html>
