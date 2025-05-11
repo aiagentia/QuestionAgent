@@ -29,12 +29,12 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px;
+      padding: 20px; /* Provides spacing from the browser window edges */
     }
 
     .container {
-      width: 100%;
-      max-width: 800px; 
+      width: 100%; /* Will now take full width available within body's padding */
+      /* max-width: 800px; */ /* REMOVED to allow full width */
       background: var(--card);
       padding: 2rem;
       border-radius: 16px;
@@ -54,18 +54,18 @@
     .sections-wrapper {
       display: flex;
       gap: 1.5rem; 
-      flex-wrap: wrap; /* Important for allowing an item to take full width */
+      flex-wrap: wrap; 
     }
 
     .section {
-      flex: 1; /* Default to sharing space */
-      min-width: 0; /* Allow shrinking below content size if needed */
-      border: 1px solid transparent; /* Placeholder for consistent spacing if needed */
+      flex: 1; 
+      min-width: 0; 
+      border: 1px solid transparent; 
     }
     
     .section.expanded {
-      flex-basis: 100% !important; /* Take full width of the flex container */
-      flex-grow: 1 !important; /* Ensure it can grow to fill space */
+      flex-basis: 100% !important; 
+      flex-grow: 1 !important; 
     }
 
     .section.hidden-by-expansion {
@@ -78,8 +78,8 @@
         flex-direction: column;
         gap: 0; 
       }
-      .section { /* Restore original section stacking styles */
-        flex-basis: auto !important; /* Reset flex-basis for stacking */
+      .section { 
+        flex-basis: auto !important; 
         margin-bottom: 2rem; 
         padding-bottom: 2rem; 
         border-bottom: 1px solid rgba(99, 102, 241, 0.2); 
@@ -89,8 +89,8 @@
         padding-bottom: 0; 
         border-bottom: none; 
       }
-      .section.expanded { /* When stacked, expanded still means it's the one focused */
-         margin-bottom: 2rem; /* Maintain some margin even when expanded and stacked */
+      .section.expanded { 
+         margin-bottom: 2rem; 
       }
       .section.expanded:last-child {
         margin-bottom: 0;
@@ -108,7 +108,7 @@
       font-size: 1.2rem;
       color: var(--text);
       opacity: 0.8;
-      margin-bottom: 0; /* Handled by section-header */
+      margin-bottom: 0; 
     }
 
     .expand-btn {
@@ -160,7 +160,7 @@
       transition: transform 0.2s ease, background 0.3s ease;
     }
 
-    button:hover:not(.expand-btn):not(.reset-button) { /* Avoid double hover effect */
+    button:hover:not(.expand-btn):not(.reset-button) { 
       background: #4f46e5;
       transform: translateY(-2px);
     }
@@ -564,23 +564,21 @@
         const isExpanding = buttonForSection.dataset.action === 'expand';
 
         if (isExpanding) {
-            // If the other section is currently expanded, minimize it first
             if (buttonForOtherSection.dataset.action === 'minimize') {
                 otherSection.classList.remove('expanded');
-                searchArticleSect.classList.remove('hidden-by-expansion'); // Make both potentially visible
+                searchArticleSect.classList.remove('hidden-by-expansion'); 
                 searchKnowledgeSect.classList.remove('hidden-by-expansion');
                 buttonForOtherSection.textContent = 'Expand';
                 buttonForOtherSection.dataset.action = 'expand';
             }
 
-            // Now expand the current section
             sectionToHandle.classList.add('expanded');
             otherSection.classList.add('hidden-by-expansion');
             buttonForSection.textContent = 'Minimize';
             buttonForSection.dataset.action = 'minimize';
-        } else { // Minimizing
+        } else { 
             sectionToHandle.classList.remove('expanded');
-            otherSection.classList.remove('hidden-by-expansion'); // Make the other section visible
+            otherSection.classList.remove('hidden-by-expansion'); 
             buttonForSection.textContent = 'Expand';
             buttonForSection.dataset.action = 'expand';
         }
