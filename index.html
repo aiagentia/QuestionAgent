@@ -9,7 +9,8 @@
   <style>
     :root {
       --primary: #6D28D9; /* Vibrant Purple */
-      --primary-hover: #5B21B6; 
+      --primary-hover: #5B21B6;
+      --primary-rgb: 109, 40, 217; /* For rgba usage */
       --bg: #111827; /* Darker Background */
       --text: #D1D5DB; /* Lighter Gray Text */
       --text-secondary: #9CA3AF; /* Medium Gray for less emphasis */
@@ -18,6 +19,11 @@
       --input-focus-border: var(--primary);
       --input-focus-shadow: rgba(109, 40, 217, 0.25);
       --button-text-color: #FFFFFF;
+
+      /* Icon Colors */
+      --icon-collapsed-bg: #e74c3c; /* Red-ish for collapsed */
+      --icon-expanded-bg: #f39c12;  /* Orange-ish for expanded */
+      --icon-symbol-color: #FFFFFF; /* Color for + and - symbols */
     }
 
     * {
@@ -34,119 +40,158 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 24px; 
+      padding: 24px;
     }
 
     .container {
-      width: 100%; 
+      width: 100%;
+      max-width: 1200px; /* Added max-width for better layout on large screens */
       background: var(--card);
-      padding: 2.5rem; 
-      border-radius: 20px; 
+      padding: 2.5rem;
+      border-radius: 20px;
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
     }
 
-    /* Styling for the new H2 titles within each section */
-    .section > h2 {
-      font-size: 2.2rem; 
+    .section > h2 { /* Main title for each section (Search Article / Search Knowledge Base) */
+      font-size: 2.2rem;
       font-weight: 700;
-      color: var(--text); /* Or a gradient if preferred */
+      color: var(--text);
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1rem; /* Reduced margin as icon header is below */
       letter-spacing: -0.02em;
     }
 
     .sections-wrapper {
       display: flex;
-      gap: 2rem; 
-      flex-wrap: wrap; 
+      gap: 2rem;
+      flex-wrap: wrap;
     }
 
     .section {
-      flex: 1; 
-      min-width: 300px; 
-    }
-    
-    .section.expanded {
-      flex-basis: 100% !important; 
-      flex-grow: 1 !important; 
-      min-width: 100%;
+      flex: 1;
+      min-width: 300px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      overflow: hidden; /* Important for child elements like .section-content */
+      background-color: var(--card);
+      display: flex; /* Added for better control of children */
+      flex-direction: column; /* Stack header and content vertically */
     }
 
+    .interactive-header {
+      display: flex;
+      align-items: center;
+      padding: 12px 15px;
+      cursor: pointer;
+      background-color: var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      transition: background-color 0.2s ease;
+      flex-shrink: 0; /* Prevent header from shrinking */
+    }
+
+    .interactive-header:hover {
+      background-color: #4B5563;
+    }
+
+    .toggle-icon {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      margin-right: 12px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: bold;
+      color: var(--icon-symbol-color);
+      font-size: 16px;
+      line-height: 1;
+      flex-shrink: 0;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+
+    .section:not(.content-expanded) .toggle-icon {
+      background-color: var(--icon-collapsed-bg);
+    }
+    .section:not(.content-expanded) .toggle-icon::before {
+      content: '+';
+    }
+
+    .section.content-expanded .toggle-icon {
+      background-color: var(--icon-expanded-bg);
+    }
+    .section.content-expanded .toggle-icon::before {
+      content: '−';
+    }
+
+    .section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin: 0;
+    }
+
+    .section-content {
+      padding: 1.25rem;
+      display: none; /* Hidden by default */
+      flex-grow: 1; /* Allow content to take available space if section flexes */
+      overflow-y: auto;   /* Show vertical scrollbar only when content overflows max-height */
+      overflow-x: hidden; /* Typically you don't want horizontal scroll for this content */
+      max-height: 50vh;   /* ADJUST THIS: e.g., 400px, 60vh. This is max height for the scrollable area */
+                          /* When content is taller than this, internal scrollbar appears */
+    }
+
+    .section.content-expanded .section-content {
+      display: block;
+    }
+
+    .expand-btn {
+      display: none; /* Hide the old text-based "Expand" button */
+    }
+
+    /* Expansion logic for full section take-over */
+    .section.expanded {
+      flex-basis: 100% !important;
+      flex-grow: 1 !important;
+      min-width: 100%;
+    }
     .section.hidden-by-expansion {
       display: none !important;
     }
 
-    @media (max-width: 820px) { 
+
+    @media (max-width: 820px) {
       .sections-wrapper {
         flex-direction: column;
-        gap: 0; 
+        gap: 1.5rem; /* Adjusted gap for stacked view */
       }
-      .section { 
-        flex-basis: auto !important; 
+      .section {
+        flex-basis: auto !important;
         min-width: auto;
-        margin-bottom: 2.5rem; 
-        padding-bottom: 0; /* No extra padding at bottom, border handles separation */
-        border-bottom: 1px solid var(--border-color); 
+        margin-bottom: 0; /* Remove bottom margin, gap handles spacing */
       }
-      .section:last-child {
-        margin-bottom: 0; 
-        border-bottom: none; 
-      }
-      .section > h2 { /* Adjust section H2 margin for stacked view */
+      .section > h2 {
         margin-bottom: 1rem;
       }
-      .section.expanded { 
-         margin-bottom: 2.5rem; 
+       .section.expanded {
+         /* No specific margin needed here if sections-wrapper has gap */
       }
-      .section.expanded:last-child {
-        margin-bottom: 0;
+      .section-content {
+          max-height: 60vh; /* Potentially allow more height on smaller screens */
       }
-    }
-
-    .section-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 1.25rem; 
-    }
-
-    .section-title { /* This is now for "KA" and "Search" */
-      font-size: 1.25rem; 
-      font-weight: 600;
-      color: var(--text);
-      opacity: 0.9; /* Slightly more prominent */
-      margin-bottom: 0; 
-    }
-
-    .expand-btn {
-      padding: 0.6rem 1.2rem;
-      font-size: 0.875rem;
-      font-weight: 500;
-      background-color: rgba(var(--primary-rgb, 109, 40, 217), 0.2); 
-      color: var(--primary);
-      border: 1px solid var(--primary);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease-in-out;
-    }
-    .expand-btn:hover {
-      background-color: rgba(var(--primary-rgb, 109, 40, 217), 0.3);
-      color: var(--button-text-color);
-      background-color: var(--primary);
     }
 
     #askForm, #searchForm {
       display: flex;
-      gap: 0.75rem; 
-      margin-bottom: 1.25rem; 
+      gap: 0.75rem;
+      margin-bottom: 1.25rem;
     }
 
     input {
       flex: 1;
-      padding: 0.875rem 1rem; 
+      padding: 0.875rem 1rem;
       border: 1px solid var(--border-color);
-      background: transparent; 
-      border-radius: 8px; 
+      background: transparent;
+      border-radius: 8px;
       color: var(--text);
       font-size: 1rem;
       transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
@@ -162,19 +207,19 @@
       box-shadow: 0 0 0 3px var(--input-focus-shadow);
     }
 
-    button { 
+    button {
       padding: 0.875rem 1.75rem;
       background: var(--primary);
       color: var(--button-text-color);
       border: none;
       border-radius: 8px;
-      font-weight: 500; 
+      font-weight: 500;
       font-size: 1rem;
       cursor: pointer;
       transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
     }
 
-    button:hover:not(.expand-btn):not(.reset-button) { 
+    button:hover:not(.expand-btn):not(.reset-button) {
       background: var(--primary-hover);
       transform: translateY(-1px);
     }
@@ -182,11 +227,10 @@
       transform: translateY(0px);
     }
 
-
-    .search-button { 
+    .search-button {
       padding: 0.875rem;
-      width: auto; 
-      min-width: calc(0.875rem * 2 + 20px); 
+      width: auto;
+      min-width: calc(0.875rem * 2 + 20px);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -197,7 +241,7 @@
 
     .reset-button {
       padding: 0.75rem 1.5rem;
-      background: #4B5563; 
+      background: #4B5563;
       color: var(--button-text-color);
       border: none;
       border-radius: 8px;
@@ -206,14 +250,14 @@
       cursor: pointer;
       transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
       margin-top: 1.25rem;
-      display: block; 
-      width: fit-content; 
+      display: block;
+      width: fit-content;
       margin-left: auto;
       margin-right: auto;
     }
 
     .reset-button:hover {
-      background: #374151; 
+      background: #374151;
       transform: translateY(-1px);
     }
     .reset-button:active {
@@ -237,7 +281,7 @@
       border: 2px solid var(--text-secondary);
       border-radius: 50%;
       border-top-color: transparent;
-      animation: spin 0.8s linear infinite; 
+      animation: spin 0.8s linear infinite;
       margin-left: 10px;
       vertical-align: middle;
     }
@@ -247,11 +291,11 @@
     }
 
     .result {
-      background: transparent; 
-      padding: 1rem; 
+      background: transparent;
+      padding: 1rem;
       border-radius: 8px;
-      margin-top: 1rem; 
-      font-size: 1rem; 
+      margin-top: 1rem;
+      font-size: 1rem;
       line-height: 1.6;
       position: relative;
       border: 1px solid var(--border-color);
@@ -262,10 +306,10 @@
     }
 
     .search-result-item {
-      background: transparent; 
-      padding: 1rem; 
+      background: transparent;
+      padding: 1rem;
       border-radius: 8px;
-      margin-bottom: 0.75rem; 
+      margin-bottom: 0.75rem;
       border: 1px solid var(--border-color);
     }
 
@@ -273,82 +317,82 @@
       margin-bottom: 0;
     }
     .search-result-item strong {
-      color: var(--text); 
+      color: var(--text);
       font-weight: 600;
     }
 
 
-    @media (max-width: 640px) { 
+    @media (max-width: 640px) {
       .container {
         padding: 1.5rem;
       }
-      .section > h2 { /* Adjust section H2 for smaller screens */
+      .section > h2 {
         font-size: 1.8rem;
       }
       #askForm, #searchForm {
         flex-direction: column;
       }
 
-      #askForm button, #searchForm button:not(.search-button) { 
+      #askForm button, #searchForm button:not(.search-button) {
         width: 100%;
       }
-      .search-button { 
+      .search-button {
         width: 100%;
       }
-    }
-    :root {
-        --primary-rgb: 109, 40, 217; /* Corresponds to #6D28D9 */
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Global H2 removed -->
-    
     <div class="sections-wrapper">
       <div class="section" id="searchArticleSection">
-        <h2>Search Article</h2> <!-- NEW HUGE TITLE FOR THIS SECTION -->
-        <div class="section-header">
-          <div class="section-title">KA</div> <!-- CHANGED TEXT -->
-          <button class="expand-btn" data-action="expand">Expand</button>
+        <h2>Search Article</h2>
+        <div class="interactive-header">
+          <span class="toggle-icon"></span>
+          <div class="section-title">KA</div>
         </div>
-        <form id="askForm">
-          <input type="text" id="question" required placeholder="What would you like to know?" />
-          <button type="submit">Search</button>
-        </form>
-        <p id="loading" class="loading">Processing your question...</p>
-        <div class="result" id="answerContainer" style="display: none;">
-          <p id="answer"></p>
-          <div id="imageContainer" style="display: none; margin-top: 1rem;">
-            <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); display: block;" />
-            <iframe id="imageFrame" style="display: none; width: 100%; height: 400px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);"></iframe>
-            <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
-            <p id="imageUrl" style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
+        <div class="section-content">
+          <form id="askForm">
+            <input type="text" id="question" required placeholder="What would you like to know?" />
+            <button type="submit">Search</button>
+          </form>
+          <p id="loading" class="loading">Processing your question...</p>
+          <div class="result" id="answerContainer" style="display: none;">
+            <p id="answer"></p>
+            <div id="imageContainer" style="display: none; margin-top: 1rem;">
+              <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); display: block;" />
+              <iframe id="imageFrame" style="display: none; width: 100%; height: 400px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);"></iframe>
+              <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
+              <p id="imageUrl" style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
+            </div>
+            <button type="button" id="resetAskButton" class="reset-button" style="display: none;">Reset</button>
           </div>
-          <button type="button" id="resetAskButton" class="reset-button" style="display: none;">Reset</button>
         </div>
       </div>
 
       <div class="section" id="searchKnowledgeSection">
-        <h2>Search Knowledge Base</h2> <!-- NEW HUGE TITLE FOR THIS SECTION -->
-        <div class="section-header">
-          <div class="section-title">Search Keyword</div> <!-- CHANGED TEXT -->
-          <button class="expand-btn" data-action="expand">Expand</button>
+        <h2>Search Knowledge Base</h2>
+         <div class="interactive-header">
+          <span class="toggle-icon"></span>
+          <div class="section-title">Search Keyword</div>
         </div>
-        <form id="searchForm">
-          <input type="text" id="searchKeyword" required placeholder="Enter a keyword to search..." />
-          <button type="submit" class="search-button">
-            <i class="fas fa-search"></i>
-          </button>
-        </form>
-        <p id="searchLoading" class="loading">Searching...</p>
-        <div id="searchResults" style="display: none;"></div> 
-        <button type="button" id="resetSearchButton" class="reset-button" style="display: none;">Reset</button>
+        <div class="section-content">
+          <form id="searchForm">
+            <input type="text" id="searchKeyword" required placeholder="Enter a keyword to search..." />
+            <button type="submit" class="search-button">
+              <i class="fas fa-search"></i>
+            </button>
+          </form>
+          <p id="searchLoading" class="loading">Searching...</p>
+          <div id="searchResults" style="display: none;"></div>
+          <button type="button" id="resetSearchButton" class="reset-button" style="display: none;">Reset</button>
+        </div>
       </div>
     </div>
   </div>
 
   <script>
+    // --- Existing Ask Form Logic (No changes here) ---
     const askForm = document.getElementById("askForm");
     const questionInput = document.getElementById("question");
     const loadingEl = document.getElementById("loading");
@@ -371,10 +415,10 @@
       imageContainer.style.display = "none";
       imageError.style.display = "none";
       imageUrlEl.textContent = "";
-      imageEl.src = ""; 
-      imageFrame.src = ""; 
-      imageEl.style.display = "block"; 
-      imageFrame.style.display = "none"; 
+      imageEl.src = "";
+      imageFrame.src = "";
+      imageEl.style.display = "block";
+      imageFrame.style.display = "none";
 
       try {
         const response = await fetch("/api/ask", {
@@ -410,7 +454,7 @@
                   imageError.style.display = "none";
                 };
                 imageEl.onerror = function() {
-                  imageEl.style.display = "none"; 
+                  imageEl.style.display = "none";
                   if (originalImageUrlForAsk && originalImageUrlForAsk.includes('drive.google.com')) {
                       const fileIdMatch = originalImageUrlForAsk.match(/[-\w]{25,}/);
                       if (fileIdMatch && fileIdMatch[0]) {
@@ -430,7 +474,7 @@
                   }
                 };
             } else {
-                imageContainer.style.display = "none"; 
+                imageContainer.style.display = "none";
             }
           }
         } else {
@@ -440,8 +484,8 @@
         console.error('Fetch error for /api/ask:', error);
         loadingEl.style.display = "none";
         answerEl.textContent = "Error fetching data. Please try again later.";
-        answerContainer.style.display = "block"; 
-        resetAskBtn.style.display = "block"; 
+        answerContainer.style.display = "block";
+        resetAskBtn.style.display = "block";
       }
     });
 
@@ -460,6 +504,7 @@
       resetAskBtn.style.display = "none";
     });
 
+    // --- Existing Search Form Logic (No changes here) ---
     const searchForm = document.getElementById("searchForm");
     const searchKeywordInput = document.getElementById("searchKeyword");
     const searchLoadingEl = document.getElementById("searchLoading");
@@ -471,7 +516,7 @@
       const keyword = searchKeywordInput.value;
       searchLoadingEl.style.display = "block";
       searchResultsContainer.style.display = "none";
-      searchResultsContainer.innerHTML = ""; 
+      searchResultsContainer.innerHTML = "";
       resetSearchBtn.style.display = "none";
       try {
         const response = await fetch("/api/search", {
@@ -485,12 +530,12 @@
             try { const errJson = JSON.parse(errorText); detail = errJson.message || errorText; } catch (parseErr) {}
             throw new Error(`API request failed: ${detail}`);
         }
-        const data = await response.json(); 
+        const data = await response.json();
         searchLoadingEl.style.display = "none";
-        searchResultsContainer.style.display = "block"; 
-        resetSearchBtn.style.display = "block"; 
+        searchResultsContainer.style.display = "block";
+        resetSearchBtn.style.display = "block";
         if (data && Array.isArray(data) && data.length > 0) {
-          data.forEach(result => { 
+          data.forEach(result => {
             const resultElement = document.createElement("div");
             resultElement.className = "search-result-item";
             const questionStrong = document.createElement('strong');
@@ -503,26 +548,26 @@
             resultElement.appendChild(answerStrong);
             resultElement.appendChild(document.createTextNode(result.answer || ''));
             if (result.image) {
-              resultElement.appendChild(document.createElement('br')); 
+              resultElement.appendChild(document.createElement('br'));
               const itemImageContainer = document.createElement('div');
               itemImageContainer.style.marginTop = '8px';
               const itemImgTag = document.createElement('img');
-              itemImgTag.style.maxWidth = '350px'; 
-              itemImgTag.style.maxHeight = '300px'; 
+              itemImgTag.style.maxWidth = '350px';
+              itemImgTag.style.maxHeight = '300px';
               itemImgTag.style.objectFit = 'contain';
               itemImgTag.style.borderRadius = '8px';
-              itemImgTag.style.display = 'block'; 
+              itemImgTag.style.display = 'block';
               const itemIframeTag = document.createElement('iframe');
-              itemIframeTag.style.width = '350px'; 
-              itemIframeTag.style.height = '250px'; 
+              itemIframeTag.style.width = '350px';
+              itemIframeTag.style.height = '250px';
               itemIframeTag.style.borderRadius = '8px';
               itemIframeTag.style.border = 'none';
-              itemIframeTag.style.display = 'none'; 
+              itemIframeTag.style.display = 'none';
               const itemImgErrorMsg = document.createElement('p');
               itemImgErrorMsg.style.color = '#ef4444';
               itemImgErrorMsg.style.fontSize = '0.8rem';
               itemImgErrorMsg.textContent = 'Unable to load image.';
-              itemImgErrorMsg.style.display = 'none'; 
+              itemImgErrorMsg.style.display = 'none';
               let originalImageUrlForItem = "";
               if (result.image && typeof result.image === 'string') {
                 originalImageUrlForItem = result.image.trim();
@@ -542,7 +587,7 @@
                   itemImgErrorMsg.style.display = 'none';
                 };
                 itemImgTag.onerror = () => {
-                  itemImgTag.style.display = 'none'; 
+                  itemImgTag.style.display = 'none';
                   if (originalImageUrlForItem && originalImageUrlForItem.includes('drive.google.com')) {
                     const fileIdMatch = originalImageUrlForItem.match(/[-\w]{25,}/);
                     if (fileIdMatch && fileIdMatch[0]) {
@@ -554,14 +599,14 @@
                       itemIframeTag.style.display = 'none';
                       itemImgErrorMsg.style.display = 'block';
                     }
-                  } else if (originalImageUrlForItem) { 
+                  } else if (originalImageUrlForItem) {
                     itemIframeTag.style.display = 'none';
                     itemImgErrorMsg.style.display = 'block';
-                  } else { 
+                  } else {
                      itemImgErrorMsg.style.display = 'block';
                   }
                 };
-              } else { 
+              } else {
                 itemImgErrorMsg.style.display = 'block';
               }
               itemImageContainer.appendChild(itemImgTag);
@@ -580,9 +625,9 @@
       } catch (error) {
         console.error('Search error in frontend:', error);
         searchLoadingEl.style.display = "none";
-        searchResultsContainer.style.display = "block"; 
+        searchResultsContainer.style.display = "block";
         searchResultsContainer.innerHTML = `<div class="search-result-item">Error searching. ${error.message || 'Please try again later.'}</div>`;
-        resetSearchBtn.style.display = "block"; 
+        resetSearchBtn.style.display = "block";
       }
     });
 
@@ -594,42 +639,63 @@
       resetSearchBtn.style.display = "none";
     });
 
-    // Expand/Minimize Logic
-    const searchArticleSect = document.getElementById('searchArticleSection');
-    const searchKnowledgeSect = document.getElementById('searchKnowledgeSection');
-    const expandArticleButton = searchArticleSect.querySelector('.expand-btn');
-    const expandKnowledgeButton = searchKnowledgeSect.querySelector('.expand-btn');
+    // --- Collapsible Content & Full Section Expansion Logic ---
+    document.addEventListener('DOMContentLoaded', function () {
+        const allSections = document.querySelectorAll('.section');
 
-    function handleSectionExpansion(sectionToHandle, buttonForSection, otherSection, buttonForOtherSection) {
-        const isExpanding = buttonForSection.dataset.action === 'expand';
-
-        if (isExpanding) {
-            if (buttonForOtherSection.dataset.action === 'minimize') {
-                otherSection.classList.remove('expanded');
-                searchArticleSect.classList.remove('hidden-by-expansion'); 
-                searchKnowledgeSect.classList.remove('hidden-by-expansion');
-                buttonForOtherSection.textContent = 'Expand';
-                buttonForOtherSection.dataset.action = 'expand';
+        // Individual section content toggle (icon click)
+        allSections.forEach(section => {
+            const header = section.querySelector('.interactive-header');
+            if (header) {
+                header.addEventListener('click', function () {
+                    section.classList.toggle('content-expanded');
+                });
             }
+        });
 
-            sectionToHandle.classList.add('expanded');
-            otherSection.classList.add('hidden-by-expansion');
-            buttonForSection.textContent = 'Minimize';
-            buttonForSection.dataset.action = 'minimize';
-        } else { 
-            sectionToHandle.classList.remove('expanded');
-            otherSection.classList.remove('hidden-by-expansion'); 
-            buttonForSection.textContent = 'Expand';
-            buttonForSection.dataset.action = 'expand';
+        // Full section expansion (using hidden old buttons, if still desired)
+        // Note: The original .expand-btn elements are hidden by CSS.
+        // This part of the script will only work if those buttons are made visible again
+        // or if this logic is re-purposed for other triggers.
+        const searchArticleSect = document.getElementById('searchArticleSection');
+        const searchKnowledgeSect = document.getElementById('searchKnowledgeSection');
+        const oldExpandArticleButton = searchArticleSect.querySelector('.expand-btn');
+        const oldExpandKnowledgeButton = searchKnowledgeSect.querySelector('.expand-btn');
+
+        function handleFullSectionExpansion(sectionToHandle, buttonForSection, otherSection, buttonForOtherSection) {
+            const isExpanding = buttonForSection.dataset.action === 'expand';
+
+            if (isExpanding) {
+                // If the other section is minimized, expand it back first
+                if (buttonForOtherSection.dataset.action === 'minimize') {
+                    otherSection.classList.remove('expanded'); // Remove full expand from other
+                    searchArticleSect.classList.remove('hidden-by-expansion');
+                    searchKnowledgeSect.classList.remove('hidden-by-expansion');
+                    buttonForOtherSection.textContent = 'Expand';
+                    buttonForOtherSection.dataset.action = 'expand';
+                }
+
+                sectionToHandle.classList.add('expanded'); // Full expand current
+                otherSection.classList.add('hidden-by-expansion'); // Hide other
+                buttonForSection.textContent = 'Minimize';
+                buttonForSection.dataset.action = 'minimize';
+            } else { // Minimizing current full-expanded section
+                sectionToHandle.classList.remove('expanded');
+                otherSection.classList.remove('hidden-by-expansion'); // Show other again
+                buttonForSection.textContent = 'Expand';
+                buttonForSection.dataset.action = 'expand';
+            }
         }
-    }
 
-    expandArticleButton.addEventListener('click', () => {
-        handleSectionExpansion(searchArticleSect, expandArticleButton, searchKnowledgeSect, expandKnowledgeButton);
-    });
+        if (oldExpandArticleButton && oldExpandKnowledgeButton) {
+            oldExpandArticleButton.addEventListener('click', () => {
+                handleFullSectionExpansion(searchArticleSect, oldExpandArticleButton, searchKnowledgeSect, oldExpandKnowledgeButton);
+            });
 
-    expandKnowledgeButton.addEventListener('click', () => {
-        handleSectionExpansion(searchKnowledgeSect, expandKnowledgeButton, searchArticleSect, expandArticleButton);
+            oldExpandKnowledgeButton.addEventListener('click', () => {
+                handleFullSectionExpansion(searchKnowledgeSect, oldExpandKnowledgeButton, searchArticleSect, oldExpandArticleButton);
+            });
+        }
     });
 
   </script>
