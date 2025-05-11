@@ -13,6 +13,7 @@
       --text: #e2e8f0;
       --card: #1e293b;
       --primary-light: #7c7ee1; /* For expand/minimize buttons */
+      --border-color: rgba(99, 102, 241, 0.2); /* Input/Result border */
     }
 
     * {
@@ -29,12 +30,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 20px; /* Provides spacing from the browser window edges */
+      padding: 20px; 
     }
 
     .container {
-      width: 100%; /* Will now take full width available within body's padding */
-      /* max-width: 800px; */ /* REMOVED to allow full width */
+      width: 100%; 
       background: var(--card);
       padding: 2rem;
       border-radius: 16px;
@@ -43,7 +43,7 @@
     }
 
     h2 {
-      font-size: 2rem;
+      font-size: 2.8rem; /* INCREASED FONT SIZE */
       margin-bottom: 1.5rem;
       background: linear-gradient(45deg, #6366f1, #8b5cf6);
       -webkit-background-clip: text;
@@ -60,7 +60,7 @@
     .section {
       flex: 1; 
       min-width: 0; 
-      border: 1px solid transparent; 
+      /* border: 1px solid transparent; Removed, not needed */
     }
     
     .section.expanded {
@@ -82,7 +82,7 @@
         flex-basis: auto !important; 
         margin-bottom: 2rem; 
         padding-bottom: 2rem; 
-        border-bottom: 1px solid rgba(99, 102, 241, 0.2); 
+        border-bottom: 1px solid var(--border-color); 
       }
       .section:last-child {
         margin-bottom: 0; 
@@ -135,8 +135,8 @@
     input {
       flex: 1;
       padding: 1rem;
-      border: 2px solid rgba(99, 102, 241, 0.2);
-      background: rgba(255, 255, 255, 0.05);
+      border: 2px solid var(--border-color);
+      background: transparent; /* CHANGED BACKGROUND */
       border-radius: 8px;
       color: var(--text);
       font-size: 1rem;
@@ -222,14 +222,14 @@
     }
 
     .result {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 1.5rem;
+      background: transparent; /* CHANGED BACKGROUND */
+      padding: 1.2rem; /* REDUCED PADDING */
       border-radius: 8px;
-      margin-top: 1.5rem;
+      margin-top: 1rem; /* REDUCED MARGIN-TOP */
       font-size: 1.1rem;
       line-height: 1.6;
       position: relative;
-      border: 1px solid rgba(99, 102, 241, 0.2);
+      border: 1px solid var(--border-color);
     }
 
     #searchResults {
@@ -237,11 +237,11 @@
     }
 
     .search-result-item {
-      background: rgba(255, 255, 255, 0.05);
-      padding: 1rem;
+      background: transparent; /* CHANGED BACKGROUND */
+      padding: 0.8rem; /* REDUCED PADDING */
       border-radius: 8px;
       margin-bottom: 0.5rem;
-      border: 1px solid rgba(99, 102, 241, 0.2);
+      border: 1px solid var(--border-color);
     }
 
     .search-result-item:last-child {
