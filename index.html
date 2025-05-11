@@ -33,7 +33,7 @@
 
     .container {
       width: 100%;
-      max-width: 800px;
+      max-width: 800px; /* Max width of the whole container */
       background: var(--card);
       padding: 2rem;
       border-radius: 16px;
@@ -50,16 +50,35 @@
       text-align: center;
     }
 
-    .section {
-      margin-bottom: 2rem;
-      padding-bottom: 2rem;
-      border-bottom: 1px solid rgba(99, 102, 241, 0.2);
+    .sections-wrapper {
+      display: flex;
+      gap: 1.5rem; /* Space between the two sections when side-by-side */
     }
 
-    .section:last-child {
-      margin-bottom: 0;
-      padding-bottom: 0;
-      border-bottom: none;
+    .sections-wrapper > .section {
+      flex: 1; /* Each section takes equal width */
+      margin-bottom: 0; /* Override original margin for side-by-side */
+      padding-bottom: 0; /* Override original padding for side-by-side */
+      border-bottom: none; /* Override original border for side-by-side */
+      /* Sections will act as cards themselves */
+    }
+    
+    /* Restore original section styling for stacking on smaller screens */
+    @media (max-width: 820px) { /* Breakpoint for stacking sections */
+      .sections-wrapper {
+        flex-direction: column;
+        gap: 0; /* Rely on original section margins when stacked */
+      }
+      .sections-wrapper > .section {
+        margin-bottom: 2rem; /* Original */
+        padding-bottom: 2rem; /* Original */
+        border-bottom: 1px solid rgba(99, 102, 241, 0.2); /* Original */
+      }
+      .sections-wrapper > .section:last-child {
+        margin-bottom: 0; /* Original */
+        padding-bottom: 0; /* Original */
+        border-bottom: none; /* Original */
+      }
     }
 
     .section-title {
@@ -72,7 +91,7 @@
     #askForm, #searchForm {
       display: flex;
       gap: 10px;
-      margin-bottom: 2rem;
+      margin-bottom: 1rem; /* Reduced margin slightly */
     }
 
     input {
@@ -115,6 +134,28 @@
       align-items: center;
       justify-content: center;
     }
+
+    .reset-button {
+      padding: 0.8rem 1.5rem;
+      background: #718096; /* Neutral gray, or var(--primary) if preferred */
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.3s ease;
+      margin-top: 1rem;
+      display: block; /* takes full width of its container or use inline-block with text-align on parent */
+      width: fit-content; /* Or a fixed width, or 100% */
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .reset-button:hover {
+      background: #4a5568;
+      transform: translateY(-1px);
+    }
+
 
     .loading {
       display: none;
@@ -169,15 +210,15 @@
       margin-bottom: 0;
     }
 
-    @media (max-width: 640px) {
+    @media (max-width: 640px) { /* For form elements specifically */
       #askForm, #searchForm {
         flex-direction: column;
       }
 
-      button {
+      #askForm button, #searchForm button { /* Ensure all buttons in forms take full width */
         width: 100%;
       }
-
+      
       .container {
         padding: 1.5rem;
       }
@@ -186,56 +227,64 @@
 </head>
 <body>
   <div class="container">
-    <h2>AI Knowledge Interface</h2>
+    <h2>KA</h2> <!-- MODIFIED TEXT -->
     
-    <div class="section">
-      <div class="section-title">Ask a Question</div>
-      <form id="askForm">
-        <input type="text" id="question" required placeholder="What would you like to know?" />
-        <button type="submit">Ask AI</button>
-      </form>
-      <p id="loading" class="loading">Processing your question...</p>
-      <div class="result" id="answerContainer" style="display: none;">
-        <p id="answer"></p>
-        <div id="imageContainer" style="display: none; margin-top: 1rem;">
-          <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); display: block;" />
-          <iframe id="imageFrame" style="display: none; width: 100%; height: 400px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);"></iframe>
-          <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
-          <p id="imageUrl" style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
+    <div class="sections-wrapper"> <!-- NEW WRAPPER FOR SIDE-BY-SIDE LAYOUT -->
+      <div class="section">
+        <div class="section-title">Search Article</div> <!-- MODIFIED TEXT -->
+        <form id="askForm">
+          <input type="text" id="question" required placeholder="What would you like to know?" />
+          <button type="submit">Search</button> <!-- MODIFIED TEXT -->
+        </form>
+        <p id="loading" class="loading">Processing your question...</p>
+        <div class="result" id="answerContainer" style="display: none;">
+          <p id="answer"></p>
+          <div id="imageContainer" style="display: none; margin-top: 1rem;">
+            <img id="image" style="max-width: 100%; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4); display: block;" />
+            <iframe id="imageFrame" style="display: none; width: 100%; height: 400px; border: none; border-radius: 12px; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);"></iframe>
+            <p id="imageError" style="color: #ef4444; margin-top: 0.5rem; display: none;">Unable to load image. Please check the console for details.</p>
+            <p id="imageUrl" style="color: #94a3b8; font-size: 0.8rem; margin-top: 0.5rem; word-break: break-all;"></p>
+          </div>
+          <button type="button" id="resetAskButton" class="reset-button" style="display: none;">Reset</button> <!-- NEW RESET BUTTON -->
         </div>
       </div>
-    </div>
 
-    <div class="section">
-      <div class="section-title">Search Knowledge Base</div>
-      <form id="searchForm">
-        <input type="text" id="searchKeyword" required placeholder="Enter a keyword to search..." />
-        <button type="submit" class="search-button">
-          <i class="fas fa-search"></i>
-        </button>
-      </form>
-      <p id="searchLoading" class="loading">Searching...</p>
-      <div id="searchResults"></div> 
+      <div class="section">
+        <div class="section-title">Search Knowledge Base</div>
+        <form id="searchForm">
+          <input type="text" id="searchKeyword" required placeholder="Enter a keyword to search..." />
+          <button type="submit" class="search-button">
+            <i class="fas fa-search"></i>
+          </button>
+        </form>
+        <p id="searchLoading" class="loading">Searching...</p>
+        <div id="searchResults" style="display: none;"></div> 
+        <button type="button" id="resetSearchButton" class="reset-button" style="display: none;">Reset</button> <!-- NEW RESET BUTTON -->
+      </div>
     </div>
   </div>
 
   <script>
-    // Existing ask form handler
-    document.getElementById("askForm").addEventListener("submit", async function (e) {
+    const askForm = document.getElementById("askForm");
+    const questionInput = document.getElementById("question");
+    const loadingEl = document.getElementById("loading");
+    const answerContainer = document.getElementById("answerContainer");
+    const answerEl = document.getElementById("answer");
+    const imageContainer = document.getElementById("imageContainer");
+    const imageEl = document.getElementById("image");
+    const imageFrame = document.getElementById("imageFrame");
+    const imageError = document.getElementById("imageError");
+    const imageUrlEl = document.getElementById("imageUrl");
+    const resetAskBtn = document.getElementById("resetAskButton");
+
+    askForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const question = document.getElementById("question").value;
-      const loadingEl = document.getElementById("loading");
-      const answerContainer = document.getElementById("answerContainer");
-      const answerEl = document.getElementById("answer");
-      const imageContainer = document.getElementById("imageContainer");
-      const imageEl = document.getElementById("image");
-      const imageFrame = document.getElementById("imageFrame");
-      const imageError = document.getElementById("imageError");
-      const imageUrlEl = document.getElementById("imageUrl");
-
+      const question = questionInput.value;
+      
       loadingEl.style.display = "block";
       answerContainer.style.display = "none";
+      resetAskBtn.style.display = "none";
       answerEl.textContent = "";
       imageContainer.style.display = "none";
       imageError.style.display = "none";
@@ -253,13 +302,14 @@
         });
 
         const data = await response.json();
-        // console.log('Received data from /api/ask:', data);
         loadingEl.style.display = "none";
+
+        answerContainer.style.display = "block"; // Show container for answer or error
+        resetAskBtn.style.display = "block"; // Show reset button
 
         if (data.success && data.answer) {
           answerEl.textContent = data.answer;
-          answerContainer.style.display = "block";
-
+          
           if (data.image) {
             let originalImageUrlForAsk = "";
             if (data.image && typeof data.image === 'string') {
@@ -272,10 +322,7 @@
               const fileIdMatch = originalImageUrlForAsk.match(/[-\w]{25,}/);
               if (fileIdMatch && fileIdMatch[0]) {
                 attemptImageUrlForAsk = `https://drive.google.com/uc?export=download&id=${fileIdMatch[0]}`;
-                // console.log('Ask: Using GDrive direct download URL:', attemptImageUrlForAsk);
               }
-            } else if (originalImageUrlForAsk) {
-                // console.log('Ask: Using direct image URL:', attemptImageUrlForAsk);
             }
             
             imageUrlEl.textContent = `Image URL: ${attemptImageUrlForAsk || 'N/A'}`;
@@ -285,30 +332,25 @@
                 imageContainer.style.display = "block";
                 
                 imageEl.onload = function() {
-                  // console.log('Ask: Image loaded successfully via <img>');
                   imageEl.style.display = "block";
                   imageFrame.style.display = "none";
                   imageError.style.display = "none";
                 };
                 
                 imageEl.onerror = function() {
-                  // console.error('Ask: <img> failed for:', attemptImageUrlForAsk, '. Trying iframe for original:', originalImageUrlForAsk);
                   imageEl.style.display = "none"; 
                   if (originalImageUrlForAsk && originalImageUrlForAsk.includes('drive.google.com')) {
                       const fileIdMatch = originalImageUrlForAsk.match(/[-\w]{25,}/);
                       if (fileIdMatch && fileIdMatch[0]) {
                           const iframeUrl = `https://drive.google.com/file/d/${fileIdMatch[0]}/preview`;
-                          // console.log('Ask: Using GDrive iframe URL:', iframeUrl);
                           imageFrame.src = iframeUrl;
                           imageFrame.style.display = "block";
                           imageError.style.display = "none";
                       } else {
-                          // console.error('Ask: GDrive URL but no File ID for iframe from:', originalImageUrlForAsk);
                           imageFrame.style.display = "none";
                           imageError.style.display = "block";
                       }
                   } else if (originalImageUrlForAsk) {
-                      // console.error('Ask: Non-GDrive image failed, no iframe fallback:', originalImageUrlForAsk);
                       imageFrame.style.display = "none";
                       imageError.style.display = "block";
                   } else {
@@ -321,55 +363,70 @@
           }
         } else {
           answerEl.textContent = data.error || "No answer found.";
-          answerContainer.style.display = "block";
         }
       } catch (error) {
         console.error('Fetch error for /api/ask:', error);
         loadingEl.style.display = "none";
         answerEl.textContent = "Error fetching data. Please try again later.";
-        answerContainer.style.display = "block";
+        answerContainer.style.display = "block"; // Also show container for error
+        resetAskBtn.style.display = "block"; // Also show reset on error
       }
     });
 
-    // Search form handler - ONLY IMAGE SIZES MODIFIED
-    document.getElementById("searchForm").addEventListener("submit", async function (e) {
+    resetAskBtn.addEventListener("click", function() {
+      questionInput.value = "";
+      loadingEl.style.display = "none";
+      answerContainer.style.display = "none";
+      answerEl.textContent = "";
+      imageContainer.style.display = "none";
+      imageEl.src = "";
+      imageEl.style.display = "block";
+      imageFrame.src = "";
+      imageFrame.style.display = "none";
+      imageError.style.display = "none";
+      imageUrlEl.textContent = "";
+      resetAskBtn.style.display = "none";
+    });
+
+
+    const searchForm = document.getElementById("searchForm");
+    const searchKeywordInput = document.getElementById("searchKeyword");
+    const searchLoadingEl = document.getElementById("searchLoading");
+    const searchResultsContainer = document.getElementById("searchResults");
+    const resetSearchBtn = document.getElementById("resetSearchButton");
+
+    searchForm.addEventListener("submit", async function (e) {
       e.preventDefault();
 
-      const keyword = document.getElementById("searchKeyword").value;
-      const loadingEl = document.getElementById("searchLoading");
-      const resultsContainer = document.getElementById("searchResults");
+      const keyword = searchKeywordInput.value;
 
-      // console.log('Search form submitted with keyword:', keyword);
-
-      loadingEl.style.display = "block";
-      resultsContainer.style.display = "none";
-      resultsContainer.innerHTML = ""; // Clear previous results
+      searchLoadingEl.style.display = "block";
+      searchResultsContainer.style.display = "none";
+      searchResultsContainer.innerHTML = ""; 
+      resetSearchBtn.style.display = "none";
 
       try {
-        // console.log('Sending request to /api/search');
         const response = await fetch("/api/search", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ keyword }),
         });
 
-        // console.log('Response status from /api/search:', response.status);
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Search API error response:', errorText);
             let detail = errorText;
             try {
               const errJson = JSON.parse(errorText);
               detail = errJson.message || errorText;
-            } catch (parseErr) { /* Do nothing, use raw errorText */ }
+            } catch (parseErr) { /* Do nothing */ }
             throw new Error(`API request failed: ${detail}`);
         }
         const data = await response.json(); 
-        // console.log('Search results data received from /api/search:', data);
-        loadingEl.style.display = "none";
+        searchLoadingEl.style.display = "none";
+        searchResultsContainer.style.display = "block"; // Show results container
+        resetSearchBtn.style.display = "block"; // Show reset button
 
         if (data && Array.isArray(data) && data.length > 0) {
-          resultsContainer.style.display = "block";
           data.forEach(result => { 
             const resultElement = document.createElement("div");
             resultElement.className = "search-result-item";
@@ -392,19 +449,15 @@
               itemImageContainer.style.marginTop = '8px';
 
               const itemImgTag = document.createElement('img');
-              // --- MODIFIED SIZE HERE ---
               itemImgTag.style.maxWidth = '350px'; 
               itemImgTag.style.maxHeight = '300px'; 
-              // --- END MODIFIED SIZE ---
               itemImgTag.style.objectFit = 'contain';
               itemImgTag.style.borderRadius = '8px';
               itemImgTag.style.display = 'block'; 
 
               const itemIframeTag = document.createElement('iframe');
-              // --- MODIFIED SIZE HERE ---
               itemIframeTag.style.width = '350px'; 
               itemIframeTag.style.height = '250px'; 
-              // --- END MODIFIED SIZE ---
               itemIframeTag.style.borderRadius = '8px';
               itemIframeTag.style.border = 'none';
               itemIframeTag.style.display = 'none'; 
@@ -431,13 +484,11 @@
 
               if (attemptImageUrlForItem) {
                 itemImgTag.src = attemptImageUrlForItem;
-
                 itemImgTag.onload = () => {
                   itemImgTag.style.display = 'block';
                   itemIframeTag.style.display = 'none';
                   itemImgErrorMsg.style.display = 'none';
                 };
-
                 itemImgTag.onerror = () => {
                   itemImgTag.style.display = 'none'; 
                   if (originalImageUrlForItem && originalImageUrlForItem.includes('drive.google.com')) {
@@ -455,35 +506,40 @@
                     itemIframeTag.style.display = 'none';
                     itemImgErrorMsg.style.display = 'block';
                   } else { 
-                     itemImgErrorMsg.style.display = 'block';
+                     itemImgErrorMsg.style.display = 'block'; // Show error if no URL at all
                   }
                 };
               } else { 
-                itemImgErrorMsg.style.display = 'block';
+                itemImgErrorMsg.style.display = 'block'; // Show error if no URL
               }
-
               itemImageContainer.appendChild(itemImgTag);
               itemImageContainer.appendChild(itemIframeTag);
               itemImageContainer.appendChild(itemImgErrorMsg);
               resultElement.appendChild(itemImageContainer);
             }
-
-            resultsContainer.appendChild(resultElement);
+            searchResultsContainer.appendChild(resultElement);
           });
         } else if (data && Array.isArray(data) && data.length === 0) {
-          resultsContainer.style.display = "block";
-          resultsContainer.innerHTML = '<div class="search-result-item">No results found.</div>';
+          searchResultsContainer.innerHTML = '<div class="search-result-item">No results found.</div>';
         } else {
           console.error('Search results: Data received from API is not a valid array or is undefined/null', data);
-          resultsContainer.style.display = "block";
-          resultsContainer.innerHTML = '<div class="search-result-item">Error: Could not properly load search results.</div>';
+          searchResultsContainer.innerHTML = '<div class="search-result-item">Error: Could not properly load search results.</div>';
         }
       } catch (error) {
         console.error('Search error in frontend:', error);
-        loadingEl.style.display = "none";
-        resultsContainer.style.display = "block";
-        resultsContainer.innerHTML = `<div class="search-result-item">Error searching. ${error.message || 'Please try again later.'}</div>`;
+        searchLoadingEl.style.display = "none";
+        searchResultsContainer.style.display = "block"; // Show container for error
+        searchResultsContainer.innerHTML = `<div class="search-result-item">Error searching. ${error.message || 'Please try again later.'}</div>`;
+        resetSearchBtn.style.display = "block"; // Show reset on error
       }
+    });
+
+    resetSearchBtn.addEventListener("click", function() {
+      searchKeywordInput.value = "";
+      searchLoadingEl.style.display = "none";
+      searchResultsContainer.innerHTML = "";
+      searchResultsContainer.style.display = "none";
+      resetSearchBtn.style.display = "none";
     });
   </script>
 </body>
